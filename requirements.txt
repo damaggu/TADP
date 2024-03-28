@@ -1,0 +1,29 @@
+numpy
+scipy
+torchvision
+lightning
+segmentation-models-pytorch
+matplotlib
+scipy
+wandb
+git+https://github.com/huggingface/diffusers.git
+git+https://github.com/huggingface/transformers.git
+git+https://github.com/huggingface/accelerate.git
+omegaconf
+einops
+kornia
+-e git+https://github.com/openai/CLIP.git@main#egg=clip
+-e git+https://github.com/CompVis/taming-transformers.git@3ba01b241669f5ade541ce990f7650a3b8f65318#egg=taming_transformers
+opencv-python
+invisible-watermark
+pandas
+scikit-image
+scikit-learn
+pytest
+torchvision
+ftfy
+tensorboard
+Jinja2
+nltk
+clip
+gdown
