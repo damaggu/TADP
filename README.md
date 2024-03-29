@@ -1,6 +1,6 @@
-# Text-Image Alignment for Diffusion-based Perception (TADP)
+# Text-Image Alignment for Diffusion-based Perception 
+# <div align="center">TADP</div>
 
-# GIF
 ![methods](assets/methods.gif)
 
 Created by ...
