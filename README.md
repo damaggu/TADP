@@ -1,8 +1,13 @@
-# TADP
+# Text-Image Alignment for Diffusion-based Perception (TADP)
+
+# GIF
+![methods](assets/methods.gif)
 
 Created by ...
 
 This repo ...
+
+# Abstract
 
 # Setup
 
