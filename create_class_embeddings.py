@@ -104,7 +104,7 @@ def main():
     dataset = args.dataset
     import sys
     sys.path.append('../')
-    from VPD.vpd.models import FrozenCLIPEmbedder
+    from diff_misc import FrozenCLIPEmbedder
 
     # class_name = [path.split('/')[-1] for path in paths]
 
