@@ -1,5 +1,16 @@
 apt-get update && apt-get install ffmpeg libsm6 libxext6 unar vim htop unzip gcc curl g++ -y
 
+# detectron2
+git clone https:// github.com/facebookresearch/detectron2.git
+mv detectron2 detectron2_repo
+cp -r detectron2_repo/detectron2/ ./
+rm -rf detectron2_repo
+pip install fvcore pycocotools cloudpickle chainercv
+
+pip install git+https://github.com/huggingface/diffusers.git@2764db3194fc1b5069df7292fd938657d8568995
+pip install torchvision==0.15.2
+
+
 pip install torch
 pip install -r requirements.txt
 
@@ -32,6 +43,7 @@ cp trainaug.txt ./data/VOCdevkit/VOC2012/ImageSets/Segmentation/
 pip install gdown
 
 git clone https://github.com/naoto0804/cross-domain-detection.git
+mv cross-domain-detection data/
 bash data/cross-domain-detection/datasets/prepare.sh
 mv watercolor data/cross-domain-detection/datasets/
 mv comic data/cross-domain-detection/datasets/
