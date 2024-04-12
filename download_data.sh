@@ -7,13 +7,12 @@ mkdir VPD/checkpoints && cd VPD/checkpoints && wget https://huggingface.co/runwa
 # Perform actions based on the argument
 if [ "$1" = "seg" ]; then
   echo "Downloading ADE20k"
-#wget http://data.csail.mit.edu/places/ADEchallenge/ADEChallengeData2016.zip && unzip ADEChallengeData2016.zip && rm ADEChallengeData2016.zip
-#wget http://data.csail.mit.edu/places/ADEchallenge/ADEChallengeData2016/annotations.zip && unzip annotations.zip && rm annotations.zip
-#wget http://data.csail.mit.edu/places/ADEchallenge/release_test.zip && unzip release_test.zip && rm release_test.zip
-#mkdir VPD/segmentation/data && mkdir VPD/segmentation/data/ade && mv ADEChallengeData2016 VPD/segmentation/data/ade
-mkdir data && cd data &&
-gdown https://drive.google.com/uc?id=1aOLmVuf-XKQI08tSCBKzxBaJDuSmoEsF &&
-unzip ade.zip && rm ade.zip && cd ../
+
+cd data &&
+wget http://data.csail.mit.edu/places/ADEchallenge/ADEChallengeData2016.zip && unzip ADEChallengeData2016.zip && rm ADEChallengeData2016.zip &&
+wget http://data.csail.mit.edu/places/ADEchallenge/ADEChallengeData2016/annotations.zip && unzip annotations.zip && rm annotations.zip &&
+wget http://data.csail.mit.edu/places/ADEchallenge/release_test.zip && unzip release_test.zip && rm release_test.zip &&
+cd ..
 fi
 
 if [ "$1" = "depth" ]; then

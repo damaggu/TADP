@@ -39,9 +39,14 @@ cp trainaug.txt ./data/VOCdevkit/VOC2012/ImageSets/Segmentation/
 #mim install "mmcv>=2.0.0"
 
 
+# create data folder
+mkdir data
+
 # Download checkpoints
-mkdir checkpoints && cd checkpoints && wget https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt && cd ..
-#wget https://github.com/RistoranteRist/mmlab-weights/releases/download/dino-swinl/dino-5scale_swin-l_8xb2-36e_coco-5486e051.pth -P ./checkpoints/
+mkdir checkpoints &&
+wget https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt - O checkpoints/v1-5-pruned-emaonly.ckpt &&
+wget "https://www.dropbox.com/scl/fi/wetyb1nw9oo838g6jvvqa/tadp40-depth.ckpt?rlkey=368382ithd182rrrfqcop0kyk&dl=1" -O checkpoints/tadp40-depth.ckpt
+# TODO download TADP seg
 
 
 pip install gdown
