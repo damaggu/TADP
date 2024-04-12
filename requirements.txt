@@ -27,3 +27,4 @@ Jinja2
 nltk
 clip
 gdown
+-e git+https://github.com/facebookresearch/detectron2.git

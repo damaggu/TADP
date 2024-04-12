@@ -7,7 +7,8 @@ import yaml
 from torch.utils.data import DataLoader
 from torch.utils.data import ConcatDataset
 
-from TADP.tadp import TADPSeg, TADPObj
+from TADP.tadp_seg import TADPSeg
+from TADP.tadp_objdet import TADPObj
 from datasets.VOCDataset import VOCDataset
 from datasets.datamodules import PascalVOCDataModule
 import numpy as np

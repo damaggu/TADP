@@ -38,7 +38,11 @@ cp trainaug.txt ./data/VOCdevkit/VOC2012/ImageSets/Segmentation/
 #pip install openmim &&
 #mim install "mmcv>=2.0.0"
 
+
+# Download checkpoints
+mkdir checkpoints && cd checkpoints && wget https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt && cd ..
 #wget https://github.com/RistoranteRist/mmlab-weights/releases/download/dino-swinl/dino-5scale_swin-l_8xb2-36e_coco-5486e051.pth -P ./checkpoints/
+
 
 pip install gdown
 

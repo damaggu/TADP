@@ -1,6 +1,7 @@
 ###---- TADP Depth ----###
 
 ###---- TADP Sem. Segmentation ADE ----###
+WANDB_MODE=dryrun python train_tadp_mm.py TADP/mm_configs/seg_ade20k_sanitycheck.py
 
 ###---- TADP Sem. Segmentation Pascal ----###
 
