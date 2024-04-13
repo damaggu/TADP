@@ -1,6 +1,8 @@
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torchvision.transforms as T
 
 from mmseg.core import add_prefix
 from mmseg.ops import resize
@@ -53,8 +55,9 @@ class TADPSeg(BaseSegmentor):
         else:
             config.model.params.ckpt_path = f'./{sd_path}'
 
-        if ('blip' not in self.opt_dict["text_conditioning"]) and (
-                'textual_inversion' not in self.opt_dict["text_conditioning"]):
+        if (('blip' not in self.opt_dict["text_conditioning"]) and (
+                'textual_inversion' not in self.opt_dict["text_conditioning"]) and
+                (self.opt_dict["text_conditioning"] != 'prompt_input')):
             config.model.params.cond_stage_config.target = 'ldm.modules.encoders.modules.AbstractEncoder'
 
         #####
@@ -82,12 +85,14 @@ class TADPSeg(BaseSegmentor):
 
         sd_model.model = None
         text_dim = None
-        if 'blip' in self.opt_dict["text_conditioning"]:
-            with open(self.opt_dict['blip_caption_path'], 'r') as f:
-                print('Loaded blip captions!')
-                self.blip_captions = json.load(f)
-                # get max length
-                self.blip_max_length = max([len(caption) for caption in self.blip_captions])
+        _tc = self.opt_dict["text_conditioning"]
+        if 'blip' in _tc or _tc == 'prompt_input':
+            if 'blip' in _tc:
+                with open(self.opt_dict['blip_caption_path'], 'r') as f:
+                    print('Loaded blip captions!')
+                    self.blip_captions = json.load(f)
+                    # get max length
+                    self.blip_max_length = max([len(caption) for caption in self.blip_captions])
             for param in sd_model.cond_stage_model.parameters():
                 param.requires_grad = False
 
@@ -104,16 +109,16 @@ class TADPSeg(BaseSegmentor):
                 self.cross_blip_captions = None
             text_dim = 768
         # if 'textual_inversion' in self.opt_dict["text_conditioning"]:
-            # with open(self.opt_dict['textual_inversion_caption_path'], 'r') as f:
-            #     print('Loaded textual inversion captions!')
-            #     self.textual_inversion_captions = json.load(f)
-            #     get max length
-            # self.textual_inversion_max_length = max([len(caption) for caption in self.textual_inversion_captions])
-            # for param in sd_model.cond_stage_model.parameters():
-            #     param.requires_grad = False
-            # text_dim = 768
-        if not 'blip' in self.opt_dict["text_conditioning"] and not 'textual_inversion' in self.opt_dict[
-            "text_conditioning"]:
+        # with open(self.opt_dict['textual_inversion_caption_path'], 'r') as f:
+        #     print('Loaded textual inversion captions!')
+        #     self.textual_inversion_captions = json.load(f)
+        #     get max length
+        # self.textual_inversion_max_length = max([len(caption) for caption in self.textual_inversion_captions])
+        # for param in sd_model.cond_stage_model.parameters():
+        #     param.requires_grad = False
+        # text_dim = 768
+        _tc = self.opt_dict["text_conditioning"]
+        if not 'blip' in _tc and not 'textual_inversion' in _tc and not 'prompt_input' in _tc:
             del sd_model.cond_stage_model
 
         self.use_decoder = use_decoder
@@ -148,9 +153,13 @@ class TADPSeg(BaseSegmentor):
 
         textual_inversion_token_path = self.opt_dict['textual_inversion_token_path']
         if textual_inversion_token_path is not None:
-            #self.text_encoder = sd_model.cond_stage_model.transformer
-            #self.tokenizer = sd_model.cond_stage_model.tokenizer
+            # self.text_encoder = sd_model.cond_stage_model.transformer
+            # self.tokenizer = sd_model.cond_stage_model.tokenizer
             self._load_textual_inversion_token(textual_inversion_token_path)
+
+    @property
+    def device(self):
+        return self.sd_model.cond_stage_model.transformer.device
 
     def _load_textual_inversion_token(self, token):
         token_ids_and_embeddings = []
@@ -177,7 +186,7 @@ class TADPSeg(BaseSegmentor):
         # 2. Load token and embedding correctly from file
         loaded_token, embedding = next(iter(state_dict.items()))
         token = loaded_token
-        embedding = embedding.to(dtype=self.sd_model.cond_stage_model.transformer.dtype, device=self.sd_model.cond_stage_model.transformer.device)
+        embedding = embedding.to(dtype=self.sd_model.cond_stage_model.transformer.dtype, device=self.device)
 
         # 3. Make sure we don't mess up the tokenizer or text encoder
         vocab = self.sd_model.cond_stage_model.tokenizer.get_vocab()
@@ -197,7 +206,8 @@ class TADPSeg(BaseSegmentor):
         print(f"Loaded textual inversion embedding for {token}.")
 
         # resize token embeddings and set all new embeddings
-        self.sd_model.cond_stage_model.transformer.resize_token_embeddings(len(self.sd_model.cond_stage_model.tokenizer))
+        self.sd_model.cond_stage_model.transformer.resize_token_embeddings(
+            len(self.sd_model.cond_stage_model.tokenizer))
         for token_id, embedding in token_ids_and_embeddings:
             self.sd_model.cond_stage_model.transformer.get_input_embeddings().weight.data[token_id] = embedding
 
@@ -225,7 +235,7 @@ class TADPSeg(BaseSegmentor):
             enc_16_channels += 1024
             enc_32_channels += 256
 
-        if ('blip' in text_cond) or ('textual_inversion' in text_cond):
+        if ('blip' in text_cond) or ('textual_inversion' in text_cond) or 'prompt_input' in text_cond:
             enc_16_channels += 77
             enc_32_channels += 77
 
@@ -239,6 +249,22 @@ class TADPSeg(BaseSegmentor):
         bsz = len(latents)
         text_cond = self.opt_dict['text_conditioning'].split('+')
         conds = []
+
+        if 'prompt_input' in text_cond:
+            custom_prompts = [meta['prompt'] for meta in img_metas]
+            assert all([_p is not None for _p in custom_prompts]), "Prompt input requires custom prompts"
+            if isinstance(custom_prompts, str):
+                custom_prompts = [custom_prompts]
+            conds = []
+            texts = []
+            _cs = []
+            for text in custom_prompts:
+                c = self.sd_model.get_learned_conditioning([text])
+                texts.append(text)
+                _cs.append(c)
+            c = torch.cat(_cs, dim=0)
+            conds.append(c)
+
         if 'blip' in text_cond:
             texts = []
             _cs = []
@@ -261,7 +287,7 @@ class TADPSeg(BaseSegmentor):
                             text = 'a ' + 'watercolor' + ' painting of a ' + text[0]
                         if 'dreambooth' in text_cond:
                             # text = 'a dashcam photo at night of ' + text[0] + ' in sks style'
-                            text = "a dashcam photo of "+text[0]+" at sks night"
+                            text = "a dashcam photo of " + text[0] + " at sks night"
                 else:
                     text = self.blip_captions[img_id]['captions']
                 c = self.sd_model.get_learned_conditioning(text)
@@ -529,3 +555,38 @@ class TADPSeg(BaseSegmentor):
         seg_pred = seg_pred.cpu().numpy()
         seg_pred = list(seg_pred)
         return seg_pred
+
+    def single_image_inference(self, img, text: str):
+        assert self.opt_dict["text_conditioning"] == 'prompt_input', \
+            "This method is only available when model is configured for manual prompt input."
+        shape = img.shape
+        meta = {
+            "filename": "none",
+            "ori_filename": "none",
+            "ori_shape": shape,
+            "img_shape": shape,
+            "pad_shape": shape,
+            "scale_factor": np.asarray([1., 1., 1., 1.]),
+            "flip": False,
+            "flip_direction": "none",
+            "img_norm_cfg": {
+                "mean": np.asarray([127.5, 127.5, 127.5]),
+                "std": np.asarray([127.5, 127.5, 127.5]),
+            },
+            "to_rgb": True,
+            "prompt": text,
+        }
+
+        # longer_side = max(img.size)
+        transform = T.Compose(
+            [
+                T.ToTensor(),
+                T.Lambda(lambda x: x * 255.),
+                T.Normalize(mean=[127.5, 127.5, 127.5], std=[127.5, 127.5, 127.5]),
+            ]
+        )
+        img_tensor = transform(img).to(self.device)
+        img_tensor = img_tensor.unsqueeze(0)
+
+        pred = self.simple_test(img_tensor, [meta])[0]
+        return pred
