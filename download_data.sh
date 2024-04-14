@@ -4,11 +4,11 @@ initial_dir=$(pwd)
 if [ "$1" = "seg" ]; then
   echo "Downloading ADE20k"
 
-cd data &&
+cd data && mkdir ade && cd ade &&
 wget http://data.csail.mit.edu/places/ADEchallenge/ADEChallengeData2016.zip && unzip ADEChallengeData2016.zip && rm ADEChallengeData2016.zip &&
 wget http://data.csail.mit.edu/places/ADEchallenge/ADEChallengeData2016/annotations.zip && unzip annotations.zip && rm annotations.zip &&
 wget http://data.csail.mit.edu/places/ADEchallenge/release_test.zip && unzip release_test.zip && rm release_test.zip &&
-cd ..
+cd ../..
 fi
 
 if [ "$1" = "depth" ]; then
