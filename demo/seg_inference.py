@@ -5,7 +5,6 @@ os.chdir("..") # make sure we are in project root so we can load TADP module
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-import torch
 
 from TADP.utils.inference import load_tadp_seg_for_inference
 from TADP.utils.ade_info import PALETTE
@@ -14,7 +13,7 @@ device = "cuda"
 
 
 def visualize_prediction(pred: np.ndarray, img: np.ndarray = None):
-    """If image is passed, prediciton will be overlayed with opacity."""
+    """If image is passed, prediction will be overlayed with opacity."""
     r = np.zeros_like(pred).astype(np.uint8)
     g = np.zeros_like(pred).astype(np.uint8)
     b = np.zeros_like(pred).astype(np.uint8)

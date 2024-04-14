@@ -13,7 +13,8 @@ from omegaconf import OmegaConf
 from ldm.util import instantiate_from_config
 import torch.nn.functional as F
 import json
-from vpd.models import UNetWrapper, TextAdapterDepth
+from TADP.vpd.models import UNetWrapper, TextAdapterDepth
+
 
 class TADPDepthEncoder(nn.Module):
     def __init__(self, out_dim=1024, ldm_prior=[320, 640, 1280 + 1280], sd_path=None, text_dim=768,
@@ -43,9 +44,9 @@ class TADPDepthEncoder(nn.Module):
 
         ### stable diffusion layers
 
-        config = OmegaConf.load('./v1-inference.yaml')
+        config = OmegaConf.load('models/depth/configs/v1-inference.yaml')
         if sd_path is None:
-            config.model.params.ckpt_path = '../checkpoints/v1-5-pruned-emaonly.ckpt'
+            config.model.params.ckpt_path = 'checkpoints/v1-5-pruned-emaonly.ckpt'
         else:
             config.model.params.ckpt_path = f'{sd_path}'
             # config.model.params.ckpt_path = f'../{sd_path}'
@@ -55,10 +56,9 @@ class TADPDepthEncoder(nn.Module):
 
         self.unet = UNetWrapper(sd_model.model, use_attn=False)
 
-        _tc = self.opt_dict["text_conditioning"]
-        if not ("blip" in _tc or _tc == "prompt_input"):
+        if 'blip' not in self.opt_dict["text_conditioning"]:
             del sd_model.cond_stage_model
-        elif "blip" in _tc:
+        else:
             with open(self.opt_dict['blip_caption_path'], 'r') as f:
                 print('Loaded blip captions!')
                 self.blip_captions = json.load(f)
@@ -71,6 +71,16 @@ class TADPDepthEncoder(nn.Module):
         for param in self.encoder_vq.parameters():
             param.requires_grad = False
 
+        if dataset == 'nyu':
+            self.text_adapter = TextAdapterDepth(text_dim=text_dim)
+            class_embeddings = torch.load('TADP/vpd/nyu_class_embeddings.pth')
+        else:
+            raise NotImplementedError
+
+        if not self.opt_dict['use_text_adapter']:
+            self.text_adapter = None
+
+        self.register_buffer('class_embeddings', class_embeddings)
         self.gamma = nn.Parameter(torch.ones(text_dim) * 1e-4)
 
     def _init_weights(self, m):
@@ -87,22 +97,39 @@ class TADPDepthEncoder(nn.Module):
             x = self.upsample_layers[i](x)
         return self.out_conv(x)
 
-    def create_text_embeddings(self, captions):
-
+    def create_text_embeddings(self, latents, img_metas, class_ids=None):
+        bsz = latents.shape[0]
+        text_cond = self.opt_dict['text_conditioning'].split('+')
         conds = []
-        texts = []
-        _cs = []
-        for text in captions:
-            c = self.sd_model.get_learned_conditioning([text])
-            texts.append(text)
-            _cs.append(c)
-        c = torch.cat(_cs, dim=0)
-        conds.append(c)
+        if 'blip' in text_cond:
+            texts = []
+            _cs = []
+            for img_id in img_metas['img_paths']:
+                text = self.blip_captions[img_id]['captions']
+                c = self.sd_model.get_learned_conditioning(text)
+                texts.append(text)
+                _cs.append(c)
+            c = torch.cat(_cs, dim=0)
+            conds.append(c)
+
+        if 'class_emb' in text_cond:
+            if class_ids is not None:
+                class_embeddings = self.class_embeddings[class_ids.tolist()]
+            else:
+                class_embeddings = self.class_embeddings
+
+            c = class_embeddings.repeat(bsz, 1, 1)
+            # c_crossattn = self.text_adapter(latents, class_embeddings,
+            #                                 self.gamma)  # NOTE: here the c_crossattn should be expand_dim as latents
+            conds.append(c)
 
         c_crossattn = torch.cat(conds, dim=1)
+        c_crossattn
+        if self.opt_dict['use_text_adapter']:
+            c_crossattn = self.text_adapter(c_crossattn, self.gamma)
         return c_crossattn
 
-    def forward(self, x, captions: List[str]):
+    def forward(self, x, img_metas, class_ids=None):
         if self.opt_dict.get('use_scaled_encode', False):
             with torch.no_grad():
                 latents = self.sd_model.get_first_stage_encoding(self.sd_model.encode_first_stage(x))
@@ -111,7 +138,7 @@ class TADPDepthEncoder(nn.Module):
                 latents = self.encoder_vq.encode(x)
             latents = latents.mode().detach()
 
-        c_crossattn = self.create_text_embeddings(captions)
+        c_crossattn = self.create_text_embeddings(latents, img_metas, class_ids)
         t = torch.ones((x.shape[0],), device=x.device).long()
         # import pdb; pdb.set_trace()
         outs = self.unet(latents, t, c_crossattn=[c_crossattn])
@@ -124,7 +151,6 @@ class TADPDepth(nn.Module):
     def __init__(self, args=None):
         super().__init__()
         self.max_depth = args.max_depth
-        self.args = args
 
         embed_dim = 192
 
@@ -133,7 +159,7 @@ class TADPDepth(nn.Module):
 
         if args.dataset == 'nyudepthv2':
             self.encoder = TADPDepthEncoder(out_dim=channels_in, dataset='nyu', sd_path=args.sd_ckpt_path,
-                                            opt_dict=args.__dict__)
+                                           opt_dict=args.__dict__)
         else:
             raise NotImplementedError
 
@@ -149,7 +175,7 @@ class TADPDepth(nn.Module):
             if isinstance(m, nn.Conv2d):
                 normal_init(m, std=0.001, bias=0)
 
-    def forward(self, x, captions):
+    def forward(self, x, metas, class_ids=None):
         # import pdb; pdb.set_trace()
         b, c, h, w = x.shape
         x = x * 2.0 - 1.0  # normalize to [-1, 1]
@@ -165,7 +191,7 @@ class TADPDepth(nn.Module):
             pass
         else:
             raise NotImplementedError
-        conv_feats = self.encoder(x, captions)
+        conv_feats = self.encoder(x, metas, class_ids)
 
         if h == 480 or h == 352:
             conv_feats = conv_feats[:, :, :-1, :-1]
@@ -175,39 +201,6 @@ class TADPDepth(nn.Module):
         out_depth = torch.sigmoid(out_depth) * self.max_depth
 
         return {'pred_d': out_depth}
-
-    @torch.no_grad()
-    def test_inference(self, input_RGB: torch.tensor, prompts: List[str]):
-
-        if self.args.shift_window_test:
-            bs, _, h, w = input_RGB.shape
-            assert w > h and bs == 1
-            interval_all = w - h
-            interval = interval_all // (self.args.shift_size - 1)
-            sliding_images = []
-            sliding_masks = torch.zeros((bs, 1, h, w), device=input_RGB.device)
-            for i in range(self.args.shift_size):
-                sliding_images.append(input_RGB[..., :, i * interval:i * interval + h])
-                sliding_masks[..., :, i * interval:i * interval + h] += 1
-            input_RGB = torch.cat(sliding_images, dim=0)
-        if self.args.flip_test:
-            input_RGB = torch.cat((input_RGB, torch.flip(input_RGB, [3])), dim=0)
-
-        if input_RGB.shape[0] > 1:
-            prompts = prompts * input_RGB.shape[0]
-        pred = self.forward(input_RGB, prompts)
-        pred_d = pred['pred_d']
-        if self.args.flip_test:
-            batch_s = pred_d.shape[0] // 2
-            pred_d = (pred_d[:batch_s] + torch.flip(pred_d[batch_s:], [3])) / 2.0
-        if self.args.shift_window_test:
-            pred_s = torch.zeros((bs, 1, h, w), device=pred_d.device)
-            for i in range(self.args.shift_size):
-                pred_s[..., :, i * interval:i * interval + h] += pred_d[i:i + 1]
-            pred_d = pred_s / sliding_masks
-
-        pred_d = pred_d * 1000.0  # for nyu
-        return pred_d
 
 
 class Decoder(nn.Module):
@@ -301,4 +294,3 @@ class Decoder(nn.Module):
                 constant_init(m, 1)
             elif isinstance(m, nn.ConvTranspose2d):
                 normal_init(m, std=0.001)
-
