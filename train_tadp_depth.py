@@ -60,32 +60,12 @@ def main(single_gpu=False):
         device = torch.device('cuda')
         args.rank = 0
 
-        # use defaults
-        args.batch_size = 1
-        args.dataset = "nyudepthv2"
-        args.data_path = "data"
-        args.max_depth = 10.0
-        args.max_depth_eval = 10.0
-        args.weight_decay = 0.1
-        args.num_filters = [32, 32, 32]
-        args.deconv_kernels = [2, 2, 2]
-        args.flip_test = True
-        args.shift_window_test = True
-        args.shift_size = 2
-        args.save_model = False
-        args.layer_decay = 0.9
-        args.drop_path_rate = 0.3
-        args.crop_h = 480
-        args.crop_w = 480
-        args.epochs = 25
-
-        args.seed = 42
-        args.deterministic = False
-
     if args.debug:
         args.workers = 0
         args.batch_size = 2
         os.environ["WANDB_MODE"] = "dryrun"
+
+    args.shift_window_test = True  # TODO test/validate does not work if this is off
 
     pretrain = args.pretrained.split('.')[0]
     maxlrstr = str(args.max_lr).replace('.', '')
@@ -245,6 +225,10 @@ def train(train_loader, model, criterion_d, log_txt, optimizer, device, epoch, a
     iterations = len(train_loader)
     result_lines = []
     for batch_idx, batch in enumerate(train_loader):
+
+        if batch_idx == 2 and args.sanity_check:
+            break
+
         global_step += 1
 
         metas = {'img_paths': batch['ori_img_path']}
@@ -309,6 +293,10 @@ def validate(val_loader, model, criterion_d, device, epoch, args):
         result_metrics[metric] = 0.0
 
     for batch_idx, batch in enumerate(val_loader):
+
+        if batch_idx == 2 and args.sanity_check:
+            break
+
         input_RGB = batch['image'].to(device)
         depth_gt = batch['depth'].to(device)
         filename = batch['filename'][0]

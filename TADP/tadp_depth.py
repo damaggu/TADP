@@ -6,6 +6,7 @@ TODO link to VPD file
 from typing import List
 import torch
 import torch.nn as nn
+import torchvision.transforms as T
 from timm.models.layers import trunc_normal_, DropPath
 from mmcv.cnn import (build_conv_layer, build_norm_layer, build_upsample_layer,
                       constant_init, normal_init)
@@ -56,9 +57,10 @@ class TADPDepthEncoder(nn.Module):
 
         self.unet = UNetWrapper(sd_model.model, use_attn=False)
 
-        if 'blip' not in self.opt_dict["text_conditioning"]:
+        _tc = self.opt_dict["text_conditioning"]
+        if not ("blip" in _tc or _tc == "prompt_input"):
             del sd_model.cond_stage_model
-        else:
+        elif "blip" in _tc:
             with open(self.opt_dict['blip_caption_path'], 'r') as f:
                 print('Loaded blip captions!')
                 self.blip_captions = json.load(f)
@@ -80,7 +82,7 @@ class TADPDepthEncoder(nn.Module):
         if not self.opt_dict['use_text_adapter']:
             self.text_adapter = None
 
-        self.register_buffer('class_embeddings', class_embeddings)
+        self.register_buffer('class_embeddings', class_embeddings)  # TODO don't we need this only in VPD setting?
         self.gamma = nn.Parameter(torch.ones(text_dim) * 1e-4)
 
     def _init_weights(self, m):
@@ -99,32 +101,45 @@ class TADPDepthEncoder(nn.Module):
 
     def create_text_embeddings(self, latents, img_metas, class_ids=None):
         bsz = latents.shape[0]
-        text_cond = self.opt_dict['text_conditioning'].split('+')
+
         conds = []
-        if 'blip' in text_cond:
-            texts = []
-            _cs = []
-            for img_id in img_metas['img_paths']:
-                text = self.blip_captions[img_id]['captions']
-                c = self.sd_model.get_learned_conditioning(text)
+        texts = []
+        _cs = []
+
+        if self.opt_dict['text_conditioning'] == "prompt_input":
+            captions = img_metas.get("prompts")
+            assert captions is not None
+            for text in captions:
+                c = self.sd_model.get_learned_conditioning([text])
                 texts.append(text)
                 _cs.append(c)
             c = torch.cat(_cs, dim=0)
             conds.append(c)
+        else:
+            text_cond = self.opt_dict['text_conditioning'].split('+')
 
-        if 'class_emb' in text_cond:
-            if class_ids is not None:
-                class_embeddings = self.class_embeddings[class_ids.tolist()]
-            else:
-                class_embeddings = self.class_embeddings
+            if 'blip' in text_cond:
+                for img_id in img_metas['img_paths']:
+                    text = self.blip_captions[img_id]['captions']
+                    c = self.sd_model.get_learned_conditioning(text)
+                    texts.append(text)
+                    _cs.append(c)
+                c = torch.cat(_cs, dim=0)
+                conds.append(c)
 
-            c = class_embeddings.repeat(bsz, 1, 1)
-            # c_crossattn = self.text_adapter(latents, class_embeddings,
-            #                                 self.gamma)  # NOTE: here the c_crossattn should be expand_dim as latents
-            conds.append(c)
+            if 'class_emb' in text_cond:
+                if class_ids is not None:
+                    class_embeddings = self.class_embeddings[class_ids.tolist()]
+                else:
+                    class_embeddings = self.class_embeddings
+
+                c = class_embeddings.repeat(bsz, 1, 1)
+                # c_crossattn = self.text_adapter(latents, class_embeddings,
+                #                                 self.gamma)  # NOTE: here the c_crossattn should be expand_dim as latents
+                conds.append(c)
 
         c_crossattn = torch.cat(conds, dim=1)
-        c_crossattn
+
         if self.opt_dict['use_text_adapter']:
             c_crossattn = self.text_adapter(c_crossattn, self.gamma)
         return c_crossattn
@@ -151,6 +166,7 @@ class TADPDepth(nn.Module):
     def __init__(self, args=None):
         super().__init__()
         self.max_depth = args.max_depth
+        self.args = args
 
         embed_dim = 192
 
@@ -174,6 +190,11 @@ class TADPDepth(nn.Module):
         for m in self.last_layer_depth.modules():
             if isinstance(m, nn.Conv2d):
                 normal_init(m, std=0.001, bias=0)
+
+
+    @property
+    def device(self):
+        return next(self.parameters()).device
 
     def forward(self, x, metas, class_ids=None):
         # import pdb; pdb.set_trace()
@@ -201,6 +222,54 @@ class TADPDepth(nn.Module):
         out_depth = torch.sigmoid(out_depth) * self.max_depth
 
         return {'pred_d': out_depth}
+
+    @torch.no_grad()
+    def test_inference(self, input_RGB: torch.tensor, prompts: List[str]):
+        if self.args.shift_window_test:
+            bs, _, h, w = input_RGB.shape
+            assert w > h and bs == 1
+            interval_all = w - h
+            interval = interval_all // (self.args.shift_size - 1)
+            sliding_images = []
+            sliding_masks = torch.zeros((bs, 1, h, w), device=input_RGB.device)
+            for i in range(self.args.shift_size):
+                sliding_images.append(input_RGB[..., :, i * interval:i * interval + h])
+                sliding_masks[..., :, i * interval:i * interval + h] += 1
+            input_RGB = torch.cat(sliding_images, dim=0)
+        if self.args.flip_test:
+            input_RGB = torch.cat((input_RGB, torch.flip(input_RGB, [3])), dim=0)
+        if input_RGB.shape[0] > 1:
+            prompts = prompts * input_RGB.shape[0]
+        meta = {
+            "img_paths": None,
+            "prompts": prompts
+        }
+        pred = self.forward(input_RGB, meta)
+        pred_d = pred['pred_d']
+
+        if self.args.flip_test:
+            batch_s = pred_d.shape[0] // 2
+            pred_d = (pred_d[:batch_s] + torch.flip(pred_d[batch_s:], [3])) / 2.0
+
+        if self.args.shift_window_test:
+            pred_s = torch.zeros((bs, 1, h, w), device=pred_d.device)
+            for i in range(self.args.shift_size):
+                pred_s[..., :, i * interval:i * interval + h] += pred_d[i:i + 1]
+            pred_d = pred_s / sliding_masks
+        pred_d = pred_d * 1000.0  # for nyu
+
+        return pred_d
+
+    def single_image_inference(self, img, text: str):
+        assert self.encoder.opt_dict["text_conditioning"] == 'prompt_input', \
+            "This method is only available when model is configured for manual prompt input."
+        transform = T.ToTensor()
+        img = transform(img).to(self.device)
+        if len(img.shape) == 3:
+            img = img.unsqueeze(0)
+
+        pred = self.test_inference(img, [text])[0].permute(1, 2, 0).cpu().numpy()
+        return pred
 
 
 class Decoder(nn.Module):

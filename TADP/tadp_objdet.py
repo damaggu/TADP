@@ -63,7 +63,7 @@ class TADPObj(pl.LightningModule):
                  decode_head=None,
                  sd_path='checkpoints/v1-5-pruned-emaonly.ckpt',
                  unet_config=dict(),
-                 class_embedding_path='class_embeddings.pth',
+                 class_embedding_path='ade_class_embeddings.pth',
                  gamma_init_value=1e-4,
                  neck=None,
                  auxiliary_head=None,

@@ -1,4 +1,5 @@
 ###---- TADP Depth ----###
+WANDB_MODE=dryrun python train_tadp_depth.py --epochs 1 --batch_size 2 --sanity_check
 
 ###---- TADP Sem. Segmentation ADE ----###
 WANDB_MODE=dryrun python train_tadp_mm.py TADP/mm_configs/seg_ade20k_sanitycheck.py

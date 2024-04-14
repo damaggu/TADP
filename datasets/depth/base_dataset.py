@@ -16,7 +16,6 @@ def get_dataset(dataset_name, **kwargs):
         '.' + dataset_name, package='datasets.depth')
 
     dataset_abs = getattr(dataset_lib, dataset_name)
-    print(dataset_abs)
 
     return dataset_abs(**kwargs)
 

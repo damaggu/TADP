@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from TADP.utils.inference import load_tadp_seg_for_inference
-from TADP.utils.ade_info import PALETTE
+from datasets.ade_info import PALETTE
 
 device = "cuda"
 
@@ -32,8 +32,7 @@ def visualize_prediction(pred: np.ndarray, img: np.ndarray = None):
     plt.show()
 
 
-model = load_tadp_seg_for_inference("checkpoints/tadp_seg_blipmin40.ckpt")
-model.to(device)
+model = load_tadp_seg_for_inference("checkpoints/tadp_seg_blipmin40.ckpt", device=device)
 
 img = cv2.imread("demo/example_img.jpg")
 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)

@@ -45,8 +45,8 @@ class BaseOptions():
         parser.add_argument('--drop_path_rate',     type=float, default=0.3)
         parser.add_argument('--use_checkpoint',   type=str2bool, default='False')
         parser.add_argument('--num_deconv',     type=int, default=3)
-        parser.add_argument('--num_filters', nargs='+', type=int)
-        parser.add_argument('--deconv_kernels', nargs='+', type=int)
+        parser.add_argument('--num_filters', nargs='+', type=int, default=[32, 32, 32])
+        parser.add_argument('--deconv_kernels', nargs='+', type=int, default=[2, 2, 2])
 
         parser.add_argument('--shift_window_test', action='store_true')     
         parser.add_argument('--shift_size',  type=int, default=2)
