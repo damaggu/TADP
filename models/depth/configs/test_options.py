@@ -11,7 +11,7 @@ class TestOptions(BaseOptions):
 
         # experiment configs
         parser.add_argument('--ckpt_dir',   type=str,
-                    default='./best.ckpt',
+                    default=None,
                     help='load ckpt path')
         parser.add_argument('--result_dir', type=str, default='./results',
                             help='save result images into result_dir/exp_name')

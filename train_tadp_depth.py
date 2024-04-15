@@ -1,4 +1,8 @@
 # ------------------------------------------------------------------------------
+#
+# Mostly copied and adapted from VPD.
+# https://github.com/wl-zhao/VPD/blob/main/depth/train.py
+#
 # The code is from GLPDepth (https://github.com/vinvino02/GLPDepth).
 # For non-commercial purpose only (research, evaluation etc).
 # -----------------------------------------------------------------------------
@@ -46,17 +50,18 @@ def load_model(ckpt, model, optimizer=None):
         optimizer.load_state_dict(optimizer_state)
 
 
-def main(single_gpu=False):
+def main():
     opt = TrainOptions()
     args = opt.initialize().parse_args()
     print(args)
     set_random_seed(args.seed, deterministic=args.deterministic)
 
-    if not single_gpu:
+    if dist_utils.is_launched_with_torch_distributed():
+        print("Running on distributed.")
         dist_utils.init_distributed_mode_simple(args)
-        print(args)
         device = torch.device(args.gpu)
     else:
+        print("Running on single GPU.")
         device = torch.device('cuda')
         args.rank = 0
 
@@ -104,7 +109,7 @@ def main(single_gpu=False):
     cudnn.benchmark = True
     model.to(device)
     model_without_ddp = model
-    if not single_gpu:
+    if dist_utils.is_launched_with_torch_distributed():
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=True)
 
     # Dataset setting
@@ -370,4 +375,4 @@ def validate(val_loader, model, criterion_d, device, epoch, args):
 
 
 if __name__ == '__main__':
-    main(single_gpu=True)
+    main()

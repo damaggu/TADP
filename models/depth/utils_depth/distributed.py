@@ -64,3 +64,8 @@ def is_dist_avail_and_initialized():
     if not dist.is_initialized():
         return False
     return True
+
+
+def is_launched_with_torch_distributed():
+    # Check for an environment variable that torch.distributed.launch would set
+    return 'WORLD_SIZE' in os.environ
