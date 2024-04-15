@@ -15,7 +15,7 @@ import numpy as np
 import datetime
 from datasets.VOC_config import cfg as voc_cfg
 
-from TADP.utils import voc_classes, empty_collate
+from TADP.utils.detection_utils import voc_classes, empty_collate
 
 
 def main():
@@ -67,7 +67,7 @@ def main():
     parser.add_argument('--train_dataset', type=str, nargs='+', default=['VOC2012_ext'])
     parser.add_argument('--train_max_samples', type=int, default=None)
 
-    # vpd specific parameters
+    # TADP specific parameters
     parser.add_argument('--text_conditioning', type=str, default='class_emb')
     parser.add_argument('--min_blip', type=int, default=0)
     parser.add_argument('--task_inversion_lr', type=float, default=0.002)
@@ -83,6 +83,7 @@ def main():
 
     parser.add_argument('--trainer_ckpt_path', type=str, default=None)
     parser.add_argument('--save_checkpoint_path', type=str, default='')
+    parser.add_argument('--train_debug', action='store_true', default=False)
     args = parser.parse_args()
 
     model_name = args.model_name
@@ -113,13 +114,13 @@ def main():
         max_epochs = 4
         os.environ["WANDB_MODE"] = "dryrun"
         num_workers = 0
-        batch_size = 16 if 'VPD' not in args.model else batch_size
+        batch_size = 16 if 'TADP' not in args.model else batch_size
         log_freq = 1
         save_last = False
         save_topk = 0
     if args.wandb_debug:
         num_workers = 0
-        batch_size = 16 if 'VPD' not in args.model else batch_size
+        batch_size = 16 if 'TADP' not in args.model else batch_size
         limit_val_batches = 2
         limit_train_batches = 2
         wandb_group = "wandb_debugging"
@@ -185,13 +186,9 @@ def main():
 
         class_names = voc_classes
 
-        train_dataset = ConcatDataset(train_datasets)
-        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers,
+        train_loader = DataLoader(train_datasets, batch_size=batch_size, shuffle=True, num_workers=num_workers,
                                   drop_last=True, collate_fn=empty_collate)
-        val_loader = DataLoader(pascal_val_dataset, batch_size=val_batch_size, shuffle=False, num_workers=num_workers,
-                                drop_last=True, collate_fn=empty_collate)
 
-        val_loaders.append(val_loader)
 
     else:
         raise ValueError(f'Invalid task: {args.task}')
@@ -231,7 +228,7 @@ def main():
 
     cfg['dreambooth_checkpoint'] = args.dreambooth_checkpoint
     cfg['textual_inversion_token_path'] = args.textual_inversion_token_path
-    cfg['dataset_len'] = len(train_dataset)
+    cfg['dataset_len'] = len(train_datasets)
     cfg['val_dataset_name'] = args.val_dataset_name
     cfg['cross_blip_caption_path'] = args.cross_blip_caption_path
 
@@ -264,35 +261,46 @@ def main():
             "test", classes)
 
         if args.train_dataset_name == 'pascal':
-            train_dataset = train_dataset
+            pass  # already pascal
         elif args.train_dataset_name == 'cross':
-            train_dataset = cross_domain_train
+            train_datasets = cross_domain_train
         else:
             raise ValueError('train dataset name not recognized')
 
+        if args.train_debug:
+            train_datasets = torch.utils.data.Subset(train_datasets, range(100))
+            cross_domain_val = torch.utils.data.Subset(cross_domain_val, range(100))
+
         if args.val_dataset_name == 'pascal':
-            val_dataset = pascal_val_dataset
-        elif args.val_dataset_name == 'cross':
-            val_dataset = cross_domain_val
-            val_loader = DataLoader(val_dataset, batch_size=val_batch_size, shuffle=False,
+            val_loader = DataLoader(pascal_val_dataset, batch_size=val_batch_size, shuffle=False,
                                     num_workers=num_workers,
                                     drop_last=True, collate_fn=empty_collate)
-            val_loaders.append(val_loader)
+
+        elif args.val_dataset_name == 'cross':
+            val_loader = DataLoader(cross_domain_val, batch_size=val_batch_size, shuffle=False,
+                                    num_workers=num_workers,
+                                    drop_last=True, collate_fn=empty_collate)
+
         else:
             raise ValueError('val dataset name not recognized')
 
-        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers,
+        val_loaders.append(val_loader)
+
+        train_loader = DataLoader(train_datasets, batch_size=batch_size, shuffle=True, num_workers=num_workers,
                                   drop_last=True, collate_fn=empty_collate)
 
     if checkpoint is not None and pretrained:
-        state_dict = torch.load(checkpoint)["state_dict"]
-        # making older state dicts compatible with current model
-        if list(state_dict.keys())[0] != list(model.state_dict().keys())[0]:
-            print('Loading pretrained model with different key names')
-            # replace each key in state_dict with the corresponding key in model.state_dict()
-            state_dict = {list(model.state_dict().keys())[i]: list(state_dict.values())[i] for i in
-                          range(len(state_dict))}
-        model.load_state_dict(state_dict, strict=True)
+        try:
+            state_dict = torch.load(checkpoint)["state_dict"]
+            # making older state dicts compatible with current model
+            if list(state_dict.keys())[0] != list(model.state_dict().keys())[0]:
+                print('Loading pretrained model with different key names')
+                # replace each key in state_dict with the corresponding key in model.state_dict()
+                state_dict = {list(model.state_dict().keys())[i]: list(state_dict.values())[i] for i in
+                              range(len(state_dict))}
+            model.load_state_dict(state_dict, strict=True)
+        except KeyError:
+            model.load_state_dict(torch.load(checkpoint))
 
     checkpoint_callbacks = []
     for i in range(len(val_loaders)):
