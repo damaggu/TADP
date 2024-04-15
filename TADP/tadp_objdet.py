@@ -1,49 +1,38 @@
+import json
 import os
 import pickle
-import wandb
-from omegaconf import OmegaConf
-
-### tadp crossdomain object detection
-from huggingface_hub import hf_hub_download
-
-from detectron2.structures.instances import Instances
-
-from diffusion_misc import UNetWrapper, TextAdapter
-
-import segmentation_models_pytorch as smp
-
-from ldm.util import instantiate_from_config
-
-from PIL import Image
-import numpy as np
-import json
-
-# our stuff
-from diffusers.utils import _get_model_file, DIFFUSERS_CACHE
-
-from TADP.utils.detection_utils import create_bounding_boxes_from_masks, annotations_to_boxes
-from TADP.utils.detection_utils import REDUCED_CLASS_NAMES, DETECTRON_VOC_CLASS_NAMES
-from TADP.utils.pascal_voc_evaluation import PascalVOCDetectionEvaluator
-
-import torch.nn.functional as F
-from chainercv.evaluations import eval_detection_voc
-from torchmetrics.detection.mean_ap import MeanAveragePrecision
-
-import torchvision.transforms.v2.functional
-from torchvision import datapoints
-from torchvision.ops import FeaturePyramidNetwork
-
-from matplotlib import pyplot as plt
-import lightning.pytorch as pl
-import torchvision
-from torchvision.models.detection.anchor_utils import AnchorGenerator
-
 import warnings
 from typing import Dict, List, Tuple
 
+import lightning.pytorch as pl
+import numpy as np
+import segmentation_models_pytorch as smp
 import torch
+import torch.nn.functional as F
+import torchvision
+import torchvision.transforms.v2.functional
+import wandb
+from PIL import Image
+from chainercv.evaluations import eval_detection_voc
+# our stuff
+from diffusers.utils import _get_model_file, DIFFUSERS_CACHE
+### tadp crossdomain object detection
+from huggingface_hub import hf_hub_download
+from matplotlib import pyplot as plt
+from omegaconf import OmegaConf
 from torch import nn, Tensor
+from torchmetrics.detection.mean_ap import MeanAveragePrecision
+from torchvision import datapoints
 from torchvision.models.detection import FasterRCNN
+from torchvision.models.detection.anchor_utils import AnchorGenerator
+from torchvision.ops import FeaturePyramidNetwork
+
+from TADP.utils.detection_utils import REDUCED_CLASS_NAMES, DETECTRON_VOC_CLASS_NAMES
+from TADP.utils.detection_utils import create_bounding_boxes_from_masks, annotations_to_boxes
+from TADP.utils.pascal_voc_evaluation import PascalVOCDetectionEvaluator
+from TADP.vpd.models import UNetWrapper
+from detectron2.structures.instances import Instances
+from ldm.util import instantiate_from_config
 
 
 class CustomFasterRCNN(FasterRCNN):
