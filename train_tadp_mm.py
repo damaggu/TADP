@@ -1,6 +1,6 @@
 """
 Mostly copied and adapted from VPD.
-TODO link to VPD train file
+https://github.com/wl-zhao/VPD/blob/main/segmentation/train.py
 """
 
 
@@ -108,7 +108,7 @@ def parse_args():
     parser.add_argument('--use_scaled_encode', action='store_true', default=False)
     parser.add_argument('--append_self_attention', action='store_true', default=False)
     parser.add_argument('--use_text_adapter', action='store_true', default=False)
-    parser.add_argument('--sd_ckpt_path', type=str, default=None)
+    parser.add_argument('--sd_ckpt_path', type=str, default="checkpoints/v1-5-pruned-emaonly.ckpt")
     parser.add_argument('--debug', action='store_true', default=False)
     parser.add_argument('--textual_inversion_token_path', type=str, default=None)
     parser.add_argument('--textual_inversion_caption_path', type=str, default=None)

@@ -32,7 +32,7 @@ class TADPSeg(BaseSegmentor):
                  decode_head,
                  sd_path='checkpoints/v1-5-pruned-emaonly.ckpt',
                  unet_config=dict(),
-                 class_embedding_path='TADP/vpd/class_embeddings.pth',
+                 class_embedding_path='TADP/vpd/ade_class_embeddings.pth',
                  gamma_init_value=1e-4,
                  neck=None,
                  auxiliary_head=None,
