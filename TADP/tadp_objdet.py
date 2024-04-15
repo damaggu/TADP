@@ -1,31 +1,19 @@
-# TODO clean imports, only what is needed for ObjDet
-import gc
 import os
 import pickle
 import wandb
-import torch
 from omegaconf import OmegaConf
-
-import torch.nn as nn
-import lightning.pytorch as pl
 
 ### tadp crossdomain object detection
 from huggingface_hub import hf_hub_download
 
 from detectron2.structures.instances import Instances
-from pascal_voc_evaluation import PascalVOCDetectionEvaluator
-from faster_rcn_tests import CustomFasterRCNN
-from vpd.models import UNetWrapper, TextAdapter
 
-from segmentation_models_pytorch.decoders.fpn.decoder import FPNDecoder
+from diffusion_misc import UNetWrapper, TextAdapter
 
 import segmentation_models_pytorch as smp
 
-from segmentation_models_pytorch.base import SegmentationHead
-
 from ldm.util import instantiate_from_config
 
-from itertools import islice
 from PIL import Image
 import numpy as np
 import json
@@ -33,30 +21,110 @@ import json
 # our stuff
 from diffusers.utils import _get_model_file, DIFFUSERS_CACHE
 
-from TADP.utils import create_bounding_boxes_from_masks, annotations_to_boxes
+from TADP.utils.detection_utils import create_bounding_boxes_from_masks, annotations_to_boxes
+from TADP.utils.detection_utils import REDUCED_CLASS_NAMES, DETECTRON_VOC_CLASS_NAMES
+from TADP.utils.pascal_voc_evaluation import PascalVOCDetectionEvaluator
 
 import torch.nn.functional as F
 from chainercv.evaluations import eval_detection_voc
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
 
-import torchvision.transforms as T
 import torchvision.transforms.v2.functional
-from matplotlib import pyplot as plt, patches
-from segmentation_models_pytorch.decoders.deeplabv3.decoder import DeepLabV3PlusDecoder
 from torchvision import datapoints
-from torchvision.models.detection.anchor_utils import AnchorGenerator
 from torchvision.ops import FeaturePyramidNetwork
 
-from models.segmentation._abstract import SegmentationModel
+from matplotlib import pyplot as plt
+import lightning.pytorch as pl
+import torchvision
+from torchvision.models.detection.anchor_utils import AnchorGenerator
 
-from segmentation_models_pytorch.decoders.fpn.decoder import FPNBlock, SegmentationBlock, MergeBlock
-from segmentation_models_pytorch.decoders.fpn.decoder import FPNDecoder as original_FPNDecoder
+import warnings
+from typing import Dict, List, Tuple
 
-from TADP.utils import REDUCED_CLASS_NAMES, CLASS_NAMES, DETECTRON_VOC_CLASS_NAMES
+import torch
+from torch import nn, Tensor
+from torchvision.models.detection import FasterRCNN
 
 
-hacky = False  # TODO resolve
+class CustomFasterRCNN(FasterRCNN):
+    def __init__(self, backbone, num_classes, **kwargs):
+        super().__init__(backbone, num_classes, **kwargs)
 
+    def forward(self, images, images_tensor, features, targets=None):
+        """
+        Args:
+            images (list[Tensor]): images to be processed
+            targets (list[Dict[str, Tensor]]): ground-truth boxes present in the image (optional)
+
+        Returns:
+            result (list[BoxList] or dict[Tensor]): the output from the model.
+                During training, it returns a dict[Tensor] which contains the losses.
+                During testing, it returns list[BoxList] contains additional fields
+                like `scores`, `labels` and `mask` (for Mask R-CNN models).
+
+        """
+        if self.training:
+            if targets is None:
+                torch._assert(False, "targets should not be none when in training mode")
+            else:
+                for target in targets:
+                    boxes = target["boxes"]
+                    if isinstance(boxes, torch.Tensor):
+                        torch._assert(
+                            len(boxes.shape) == 2 and boxes.shape[-1] == 4,
+                            f"Expected target boxes to be a tensor of shape [N, 4], got {boxes.shape}.",
+                        )
+                    else:
+                        torch._assert(False, f"Expected target boxes to be of type Tensor, got {type(boxes)}.")
+
+        original_image_sizes: List[Tuple[int, int]] = []
+        for img in images_tensor:
+            val = img.shape[-2:]
+            torch._assert(
+                len(val) == 2,
+                f"expecting the last two dimensions of the Tensor to be H and W instead got {img.shape[-2:]}",
+            )
+            original_image_sizes.append((val[0], val[1]))
+
+        # images, targets = self.transform(images, targets)
+
+        # Check for degenerate boxes
+        # TODO: Move this to a function
+        if targets is not None:
+            for target_idx, target in enumerate(targets):
+                boxes = target["boxes"]
+                degenerate_boxes = boxes[:, 2:] <= boxes[:, :2]
+                if degenerate_boxes.any():
+                    # print the first degenerate box
+                    bb_idx = torch.where(degenerate_boxes.any(dim=1))[0][0]
+                    degen_bb: List[float] = boxes[bb_idx].tolist()
+                    torch._assert(
+                        False,
+                        "All bounding boxes should have positive height and width."
+                        f" Found invalid box {degen_bb} for target at index {target_idx}.",
+                    )
+
+        # features = self.backbone(images.tensors)
+        if isinstance(features, torch.Tensor):
+            raise TypeError("features must be a dict of tensors")
+        proposals, proposal_losses = self.rpn(images, features, targets)
+        detections, detector_losses = self.roi_heads(features, proposals, images.image_sizes, targets)
+        detections = self.transform.postprocess(detections, images.image_sizes,
+                                                original_image_sizes)  # type: ignore[operator]
+
+        losses = {}
+        losses.update(detector_losses)
+        losses.update(proposal_losses)
+
+        if torch.jit.is_scripting():
+            if not self._has_warned:
+                warnings.warn("RCNN always returns a (Losses, Detections) tuple in scripting")
+                self._has_warned = True
+            return losses, detections
+        else:
+            return self.eager_outputs(losses, detections)
+
+hacky = False
 class TADPObj(pl.LightningModule):
 
     def __init__(self,
@@ -541,7 +609,6 @@ class TADPObj(pl.LightningModule):
                   in
                   enumerate(y)]
         from torchvision.transforms import v2 as T
-        from torchvision.transforms.v2 import functional as F
         _size = 512
         trans = T.Compose(
             [
