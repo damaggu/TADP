@@ -7,7 +7,7 @@ from PIL import Image
 import json
 
 # from gpt_interface import GPTInterface
-from blip import BLIPInterface
+from captioning.blip import BLIPInterface
 
 from gpt_interface import GPTInterface
 from datasets.datamodules import PascalVOCDataModule
@@ -66,7 +66,7 @@ def main():
 
     img_name_dict = None
     if args.dataset == 'pascal':
-        train_path = 'data/VOCdevkit/VOC2012/JPEGImages'
+        train_path = '../data/VOCdevkit/VOC2012/JPEGImages'
         train_files = os.listdir(train_path)
         train_paths = [os.path.join(train_path, f) for f in train_files]
         img_paths = train_paths
@@ -80,7 +80,7 @@ def main():
                    'horse', 'motorcycle', 'person', 'potted plant', 'sheep',
                    'sofa', 'train', 'television']
 
-        base_path = './data/'
+        base_path = '../data/'
         cross_domain_val_dataset = PascalVOCDataModule(
             os.path.join(base_path, "cross-domain-detection/datasets/" + args.caption_dataset),
             "test", classes, image_size=(512, 512), dataset_name=args.caption_dataset)

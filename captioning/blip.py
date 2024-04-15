@@ -28,7 +28,7 @@ class BLIPInterface:
         self.caption_dataset_name = caption_dataset_name
         self.caption_params_name = caption_params_name
         self.synthetic_data_folder = synthetic_data_folder
-        self.out_path="captions/"
+        self.out_path= "../captions/"
         if self.caption_params_name is not None:
             self.captions_file = os.path.join(self.out_path, self.caption_dataset_name + '_captions_' + self.caption_params_name + '.json')
         else:

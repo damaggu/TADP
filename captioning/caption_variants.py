@@ -65,8 +65,8 @@ def filter_nouns(captions):
 
 def get_class_names(dataset_name, shuffle, remove_n_classes, remove_pct_classes, add_n_classes, add_pct_classes):
     if dataset_name == 'pascal':
-        train_dataset = VOCDataset('./', 'VOC2012', voc_cfg, 'train', True)
-        val_dataset = VOCDataset('./', 'VOC2012', voc_cfg, 'val', False)
+        train_dataset = VOCDataset('../', 'VOC2012', voc_cfg, 'train', True)
+        val_dataset = VOCDataset('../', 'VOC2012', voc_cfg, 'val', False)
         dataset = torch.utils.data.ConcatDataset([train_dataset, val_dataset])
         dataset_classes = train_dataset.classes
 
@@ -129,8 +129,8 @@ def get_class_names(dataset_name, shuffle, remove_n_classes, remove_pct_classes,
 
 def get_all_class_names(dataset_name):
     if dataset_name == 'pascal':
-        train_dataset = VOCDataset('./', 'VOC2012', voc_cfg, 'train', True)
-        val_dataset = VOCDataset('./', 'VOC2012', voc_cfg, 'val', False)
+        train_dataset = VOCDataset('../', 'VOC2012', voc_cfg, 'train', True)
+        val_dataset = VOCDataset('../', 'VOC2012', voc_cfg, 'val', False)
         dataset = torch.utils.data.ConcatDataset([train_dataset, val_dataset])
         dataset_classes = train_dataset.classes
 
