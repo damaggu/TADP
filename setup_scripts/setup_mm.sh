@@ -1,5 +1,5 @@
 conda init bash && source ~/.bashrc &&
-conda env create -f stable-diffusion/environment.yaml &&
+conda env create -f environment.yaml &&
 conda activate ldm
 
 pip install openmim &&
