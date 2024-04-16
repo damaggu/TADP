@@ -30,7 +30,7 @@ from torchvision.ops import FeaturePyramidNetwork
 from TADP.utils.detection_utils import REDUCED_CLASS_NAMES, DETECTRON_VOC_CLASS_NAMES
 from TADP.utils.detection_utils import create_bounding_boxes_from_masks, annotations_to_boxes
 from TADP.utils.pascal_voc_evaluation import PascalVOCDetectionEvaluator
-from TADP.vpd.models import UNetWrapper
+from TADP.vpd.models import UNetWrapper, TextAdapter
 from detectron2.structures.instances import Instances
 from ldm.util import instantiate_from_config
 
@@ -144,7 +144,8 @@ class TADPObj(pl.LightningModule):
 
         self.freeze_backbone = freeze_backbone
 
-        self.n_classes = len(class_names)
+        if class_names is not None:
+            self.n_classes = len(class_names)
         self.metric = mAP
         self.dataset_name = "voc"
 
