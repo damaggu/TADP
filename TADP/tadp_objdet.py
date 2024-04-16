@@ -557,12 +557,6 @@ class TADPObj(pl.LightningModule):
 
         return losses
 
-    def forward_dummy(self, img):
-        """Dummy forward function."""
-        seg_logit = self.encode_decode(img, None)
-
-        return seg_logit
-
     def forward_train(self, img, img_metas, gt_semantic_seg):
         """Forward function for training.
 
@@ -629,22 +623,8 @@ class TADPObj(pl.LightningModule):
 
         return x, y, orig_images.tensors
 
-    def encode_decode(self, img, img_metas):
-        """Encode images with backbone and decode into a semantic segmentation
-        map of the same size as input."""
-        x = self.extract_feat(img, img_metas)
-        if self.with_neck:
-            x = list(self.neck(x))
-        out = self._decode_head_forward_test(x, img_metas)
-        out = resize(
-            input=out,
-            size=img.shape[2:],
-            mode='bilinear',
-            align_corners=self.align_corners)
-        return out
 
-
-    def inference(self, img, img_meta, rescale):
+    def inference(self, img):
         pass
 
     def initialize_loss(self):
