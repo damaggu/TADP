@@ -33,9 +33,11 @@ Official implementation of the paper **Text-Image Alignment for Diffusion-based 
 
 ![methods](assets/methods.gif)
 
-# Setup
 
-# Inference
+## Setup
+
+
+## Inference
 
 If you want to use our models for inference, there are two optoins:
 
@@ -47,9 +49,11 @@ Please refer to the [demo/](demo/) directory for examples.
 If you want to generate results for a whole dataset that was used in our study (e.g., ADE20k, NYUv2) using pre-generated captions, 
 please refer to the [test_tadp_mm.py](test_tadp_mm.py) and [test_tadp_depth.py](test_tadp_depth.py) scripts.
 
-# Training
 
-# Experiments
+## Training
+
+
+## Experiments
 
 All results that are reported in our paper can be reproduced using the scripts in the [cvpr_experiments/](cvpr_experiments/) directory.
 
@@ -59,7 +63,7 @@ This code is based on [VPD](https://github.com/wl-zhao/VPD), [diffusers](https:/
 # Citation
 ```
 @article{kondapaneni2023tadp,
-  title={Text-image alignment for diffusion-based perception},
+  title={Text-image Alignment for Diffusion-based Perception},
   author={Kondapaneni, Neehar and Marks, Markus and Knott, Manuel and Guimaraes, Rogerio and Perona, Pietro},
   journal={arXiv preprint arXiv:2310.00031},
   year={2023}
