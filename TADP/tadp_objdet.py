@@ -643,138 +643,9 @@ class TADPObj(pl.LightningModule):
             align_corners=self.align_corners)
         return out
 
-    def slide_inference(self, img, img_meta, rescale):
-        """Inference by sliding-window with overlap.
-
-        If h_crop > h_img or w_crop > w_img, the small patch will be used to
-        decode without padding.
-        """
-
-        h_stride, w_stride = self.test_cfg.stride
-        h_crop, w_crop = self.test_cfg.crop_size
-        batch_size, _, h_img, w_img = img.size()
-        num_classes = self.num_classes
-        h_grids = max(h_img - h_crop + h_stride - 1, 0) // h_stride + 1
-        w_grids = max(w_img - w_crop + w_stride - 1, 0) // w_stride + 1
-        preds = img.new_zeros((batch_size, num_classes, h_img, w_img))
-        count_mat = img.new_zeros((batch_size, 1, h_img, w_img))
-        for h_idx in range(h_grids):
-            for w_idx in range(w_grids):
-                y1 = h_idx * h_stride
-                x1 = w_idx * w_stride
-                y2 = min(y1 + h_crop, h_img)
-                x2 = min(x1 + w_crop, w_img)
-                y1 = max(y2 - h_crop, 0)
-                x1 = max(x2 - w_crop, 0)
-                crop_img = img[:, :, y1:y2, x1:x2]
-                crop_seg_logit = self.encode_decode(crop_img, img_meta)
-                preds += F.pad(crop_seg_logit,
-                               (int(x1), int(preds.shape[3] - x2), int(y1),
-                                int(preds.shape[2] - y2)))
-
-                count_mat[:, :, y1:y2, x1:x2] += 1
-        assert (count_mat == 0).sum() == 0
-        if torch.onnx.is_in_onnx_export():
-            # cast count_mat to constant while exporting to ONNX
-            count_mat = torch.from_numpy(
-                count_mat.cpu().detach().numpy()).to(device=img.device)
-        preds = preds / count_mat
-        if rescale:
-            preds = resize(
-                preds,
-                size=img_meta[0]['ori_shape'][:2],
-                mode='bilinear',
-                align_corners=self.align_corners,
-                warning=False)
-        return preds
-
-    def whole_inference(self, img, img_meta, rescale):
-        """Inference with full image."""
-
-        seg_logit = self.encode_decode(img, img_meta)
-        if rescale:
-            # support dynamic shape for onnx
-            if torch.onnx.is_in_onnx_export():
-                size = img.shape[2:]
-            else:
-                size = img_meta[0]['ori_shape'][:2]
-            seg_logit = resize(
-                seg_logit,
-                size=size,
-                mode='bilinear',
-                align_corners=self.align_corners,
-                warning=False)
-
-        if torch.isnan(seg_logit).any():
-            print('########### find NAN #############')
-
-        return seg_logit
 
     def inference(self, img, img_meta, rescale):
-        """Inference with slide/whole style.
-
-        Args:
-            img (Tensor): The input image of shape (N, 3, H, W).
-            img_meta (dict): Image info dict where each dict has: 'img_shape',
-                'scale_factor', 'flip', and may also contain
-                'filename', 'ori_shape', 'pad_shape', and 'img_norm_cfg'.
-                For details on the values of these keys see
-                `mmseg/datasets/pipelines/formatting.py:Collect`.
-            rescale (bool): Whether rescale back to original shape.
-
-        Returns:
-            Tensor: The output segmentation map.
-        """
-
-        assert self.test_cfg.mode in ['slide', 'whole']
-        ori_shape = img_meta[0]['ori_shape']
-        assert all(_['ori_shape'] == ori_shape for _ in img_meta)
-        if self.test_cfg.mode == 'slide':
-            seg_logit = self.slide_inference(img, img_meta, rescale)
-        else:
-            seg_logit = self.whole_inference(img, img_meta, rescale)
-        output = F.softmax(seg_logit, dim=1)
-        flip = img_meta[0]['flip']
-        if flip:
-            flip_direction = img_meta[0]['flip_direction']
-            assert flip_direction in ['horizontal', 'vertical']
-            if flip_direction == 'horizontal':
-                output = output.flip(dims=(3,))
-            elif flip_direction == 'vertical':
-                output = output.flip(dims=(2,))
-
-        return output
-
-    def simple_test(self, img, img_meta, rescale=True):
-        """Simple test with single image."""
-        seg_logit = self.inference(img, img_meta, rescale)
-        seg_pred = seg_logit.argmax(dim=1)
-        if torch.onnx.is_in_onnx_export():
-            # our inference backend only support 4D output
-            seg_pred = seg_pred.unsqueeze(0)
-            return seg_pred
-        seg_pred = seg_pred.cpu().numpy()
-        # unravel batch dim
-        seg_pred = list(seg_pred)
-        return seg_pred
-
-    def aug_test(self, imgs, img_metas, rescale=True):
-        """Test with augmentations.
-
-        Only rescale=True is supported.
-        """
-        # aug_test rescale all imgs back to ori_shape for now
-        assert rescale
-        # to save memory, we get augmented seg logit inplace
-        seg_logit = self.inference(imgs[0], img_metas[0], rescale)
-        for i in range(1, len(imgs)):
-            cur_seg_logit = self.inference(imgs[i], img_metas[i], rescale)
-            seg_logit += cur_seg_logit
-        seg_logit /= len(imgs)
-        seg_pred = seg_logit.argmax(dim=1)
-        seg_pred = seg_pred.cpu().numpy()
-        seg_pred = list(seg_pred)
-        return seg_pred
+        pass
 
     def initialize_loss(self):
         loss = smp.losses.FocalLoss(mode="multiclass", ignore_index=self.ignore_index)
@@ -1279,47 +1150,6 @@ class TADPObj(pl.LightningModule):
 
         use_wandb = True
 
-        # calculate mAP
-
-        # self.metric.update(pred_boxes, pred_labels, gt_boxes, gt_labels)
-        # self.log("val_mAP", self.metric.compute(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
-        #
-        # mAP(pred_boxes, pred_labels, gt_boxes, gt_labels)
-        # self.log("val_mAP", mAP, on_step=False, on_epoch=True, prog_bar=True, logger=True)
-        # return mAP
-
-        ###  --- version for pytorchmodels
-        # preds = []
-        # for i in range(len(pred_boxes)):
-        #     boxes = pred_boxes[i]
-        #     labels = pred_labels[i]
-        #     # scores = pred_scores[i]
-        #
-        #     # pred = {"boxes": boxes, "labels": labels, "scores": scores}
-        #     pred = {"boxes": boxes, "labels": labels}
-        #     preds.append(pred)
-        # gt = []
-        # for i in range(len(gt_boxes)):
-        #     gt.append({"boxes": gt_boxes[i], "labels": gt_labels[i]})
-
-        # ### --- version for torchmetrics
-        # preds = []
-        # for i in range(len(pred_boxes)):
-        #     boxes = pred_boxes[i]
-        #     labels = pred_labels[i]
-        #     # scores = pred_scores[i]
-        #
-        #     # pred = {"boxes": boxes, "labels": labels, "scores": scores}
-        #     try:
-        #         pred = {"boxes": torch.stack(boxes), "labels": torch.stack(labels)}
-        #     except:
-        #         print("no boxes")
-        #         pred = {"boxes": torch.ones([0, 4]), "labels": torch.ones([0])}
-        #     preds.append(pred)
-        # gt = []
-        # for i in range(len(gt_boxes)):
-        #     gt.append({"boxes": gt_boxes[i], "labels": gt_labels[i]})
-
         metric = MeanAveragePrecision()
         for pred_box, pred_label, gt_box, gt_label in zip(pred_boxes, pred_labels, gt_boxes, gt_labels):
             try:
@@ -1356,10 +1186,6 @@ class TADPObj(pl.LightningModule):
 
         res = metric.compute()
 
-        # self.log("val_mAP_{}".format(self.dataset_name), res['map'], on_step=False, on_epoch=True, prog_bar=True,
-        #          logger=True)
-        # self.log("val_mAP_50_{}".format(self.dataset_name), res['map_50'], on_step=False, on_epoch=True, prog_bar=True,
-        #          logger=True)
         self.log("val_mAP_watercolor", res['map'], on_step=False, on_epoch=True, prog_bar=True,
                  logger=True)
         self.log("val_mAP_50_watercolor", res['map_50'], on_step=False, on_epoch=True, prog_bar=True,
