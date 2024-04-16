@@ -1,4 +1,4 @@
-# TADP: Text-Image Alignment for Diffusion-based Perception
+# Text-Image Alignment for Diffusion-based Perception (TADP)
 
 [![Project Page](https://img.shields.io/badge/Project%20Page-Link)](https://www.vision.caltech.edu/tadp/)
 [![Paper](https://img.shields.io/badge/arXiv-PDF-b31b1b)](https://arxiv.org/abs/2310.00031)
@@ -35,13 +35,23 @@ Official implementation of the paper **Text-Image Alignment for Diffusion-based 
 
 # Setup
 
-
-
 # Inference
+
+If you want to use our models for inference, there are two optoins:
+
+### Single image inference
+We provide a simple interface to load our model checkpoints and run inference with custom image and text inputs.
+Please refer to the [demo/](demo/) directory for examples.
+
+### Whole data set testing
+If you want to generate results for a whole dataset that was used in our study (e.g., ADE20k, NYUv2) using pre-generated captions, 
+please refer to the [test_tadp_mm.py](test_tadp_mm.py) and [test_tadp_depth.py](test_tadp_depth.py) scripts.
 
 # Training
 
 # Experiments
+
+All results that are reported in our paper can be reproduced using the scripts in the [cvpr_experiments/](cvpr_experiments/) directory.
 
 # Acknowledgements
 This code is based on [VPD](https://github.com/wl-zhao/VPD), [diffusers](https://github.com/wl-zhao/VPD), [stable-diffusion](https://github.com/CompVis/stable-diffusion), [mmsegmentation](https://github.com/open-mmlab/mmsegmentation), [LAVT](https://github.com/yz93/LAVT-RIS), and [MIM-Depth-Estimation](https://github.com/SwinTransformer/MIM-Depth-Estimation).
