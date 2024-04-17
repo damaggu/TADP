@@ -1,0 +1,3 @@
+## latest rerun for CVPR
+python interfaces/textual_inversion.py --learnable_property style --images_folder dreambooth_data/comic_5 --placeholder_token "<comic>" --initializer_token comic --output_dir TI_tokens/pascal_comic_5
+python interfaces/textual_inversion.py --learnable_property style --images_folder dreambooth_data/watercolor_5 --placeholder_token "<watercolor>" --initializer_token watercolor --output_dir TI_tokens/pascal_watercolor_5
