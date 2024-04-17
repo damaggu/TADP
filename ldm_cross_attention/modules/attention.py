@@ -176,8 +176,6 @@ class CrossAttention(nn.Module):
         if context_is_none or self.plot_dict is None or not self.plot_dict['visualize']:
             return None
 
-        # TODO generalize to a batch level logic
-
         ca_num = self.plot_dict['ca_num']
         timesteps = self.plot_dict['timesteps']
         prompts = self.plot_dict['prompts']

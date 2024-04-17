@@ -72,11 +72,6 @@ def main():
         help="number of ddim sampling steps",
     )
     parser.add_argument(
-        "--plms",
-        action='store_true',
-        help="use plms sampling",
-    )
-    parser.add_argument(
         "--ddim_eta",
         type=float,
         default=0.0,
@@ -146,60 +141,43 @@ def main():
         default="autocast"
     )
 
-    parser.add_argument(
-        "--visualize_cross_attention",
-        action='store_true',
-        default=False
-    )
+    ## ADDED PARAMS FOR CROSS ATTENTION VISUALIZATION
 
-    parser.add_argument(
-        "--save_to_numpy",
-        action='store_true',
-        default=False
-    )
-
-    parser.add_argument(
-        "--caption_path",
-        type=str,
-        default=None,
-    )
-
-    parser.add_argument(
-        "--n_samples",
-        type=int,
-        default=10,
-    )
-
-    parser.add_argument(
-        '--batch_size',
-        type=int,
-        default=2,
-    )
-
-    parser.add_argument('--only_save_summary', action='store_true', default=False)
-    parser.add_argument('--include_eos', action='store_true', default=False)
-    parser.add_argument('--class_embedding_path', type=str, default='./TADP/vpd/pascal_class_embeddings.pth')
-
-    #       [  1,  21,  41,  61,  81, 101, 121, 141, 161, 181, 201, 221, 241,  ## 13, 3 * 13 + 1 * 11 = 50
-    #        261, 281, 301, 321, 341, 361, 381, 401, 421, 441, 461, 481, 501,
-    #        521, 541, 561, 581, 601, 621, 641, 661, 681, 701, 721, 741, 761,
-    #        781, 801, 821, 841, 861, 881, 901, 921, 941, 961, 981]
     # cross attention plotting parameters
-    parser.add_argument('--timesteps_to_visualize', type=str, default='981')
-    parser.add_argument('--include_head_average', action='store_true', default=False)
-    parser.add_argument('--init_image', type=str, default=None)
-    parser.add_argument('--step_range', type=str, default=None)
+    parser.add_argument("--visualize_cross_attention", action='store_true', default=False)
+
+    parser.add_argument("--n_samples", type=int, default=10)
+    parser.add_argument('--batch_size', type=int, default=2)
+
+    parser.add_argument('--timesteps_to_visualize', type=str, default=None,
+                        help='by default all timesteps in the step_range will be visualized, but a comma separated list of timesteps can be provided to reduce the number of visualizations')
+    parser.add_argument('--include_head_average', action='store_true', default=False, help='include the average of the heads in the visualization')
+    parser.add_argument('--step_range', type=str, default='0,1', help='the range of timesteps for diffusion, one step will not change the actual image much but produces meaningful attention maps')
+
+    parser.add_argument('--only_save_summary', action='store_true', default=False, help='only save the summary figure')
+    parser.add_argument('--include_eos', action='store_true', default=False, help='visualize eos token')
+    parser.add_argument("--save_to_numpy", action='store_true', default=False)
 
     # text conditioning wrapper
-    parser.add_argument('--text_conditioning', type=str, default=None)
-    parser.add_argument('--min_blip', type=int, default=0)
+    parser.add_argument('--text_conditioning', type=str, default=None, help='type of text conditioning')
+    parser.add_argument("--caption_path", type=str, default=None)
+    parser.add_argument('--class_embedding_path', type=str, default='./TADP/vpd/pascal_class_embeddings.pth')
+
     opt = parser.parse_args()
 
     seed_everything(opt.seed)
     if opt.step_range is not None:
         opt.step_range = [int(t) for t in opt.step_range.split(',')]
     # process timesteps to visualize
-    opt.timesteps_to_visualize = [int(t) for t in opt.timesteps_to_visualize.split(',')]
+
+    if opt.timesteps_to_visualize is not None:
+        opt.timesteps_to_visualize = [int(t) for t in opt.timesteps_to_visualize.split(',')]
+    else:
+        time_step_opts = [1, 21, 41, 61, 81, 101, 121, 141, 161, 181, 201, 221, 241,
+                          261, 281, 301, 321, 341, 361, 381, 401, 421, 441, 461, 481, 501,
+                          521, 541, 561, 581, 601, 621, 641, 661, 681, 701, 721, 741, 761,
+                          781, 801, 821, 841, 861, 881, 901, 921, 941, 961, 981]
+        opt.timesteps_to_visualize = time_step_opts[opt.step_range[0]:opt.step_range[1]]
 
     config = OmegaConf.load(f"{opt.config}")
     config.model.params.unet_config.params.visualize_ca = opt.visualize_cross_attention
@@ -222,19 +200,15 @@ def main():
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     model = model.to(device)
 
-    if opt.plms:
-        sampler = PLMSSampler(model)
-    else:
-        sampler = DDIMSampler(model)
+    sampler = DDIMSampler(model)
 
     os.makedirs(outpath, exist_ok=True)
-    # outpath = opt.outdir
 
     batch_size = opt.batch_size
 
     sample_path = os.path.join(outpath, "samples")
     os.makedirs(sample_path, exist_ok=True)
-    base_count = 0  # len(os.listdir(sample_path))
+    base_count = 0
 
     def load_image(path):
         x_samples_ddim = Image.open(path)
@@ -256,17 +230,12 @@ def main():
         img_ids = f.readlines()
     img_ids = [img_id.strip() for img_id in img_ids]
 
-    # img_ids = tcw.blip_captions.keys()
     img_ids = list(img_ids)
-    # np.random.shuffle(img_ids)
     img_ids = img_ids[:opt.n_samples]
-    img_ids.append('2010_001715')
-    # img_names = ['base_bottle', 'base_cat', 'base_horse']
-    # img_ids = img_ids[:len(img_names)]
-    # img_ids = ['2010_002139',
-    #            '2010_001743',
-    #            '2010_001715',
-    #            '2009_004645']
+
+    # this is the id for the main image in the paper, uncomment to append to list of images to visualize
+    # img_ids.append('2010_001715')
+
     # batchify
     img_id_batches = list(chunk(img_ids, batch_size))
     print(img_id_batches)
@@ -275,13 +244,10 @@ def main():
     with torch.no_grad():
         with precision_scope("cuda"):
             with model.ema_scope():
-                tic = time.time()
-                all_samples = list()
                 for img_id_batch in tqdm(img_id_batches, desc="data"):
                     uc = None
-                    # if opt.scale != 1.0:
-                    #     uc = model.get_learned_conditioning(batch_size * [""])
 
+                    # encode the text and store the byte pair decodings
                     c, tokens = tcw.create_text_embeddings(img_metas={'img_id': list(img_id_batch)})
                     if opt.text_conditioning != 'class_emb' and opt.text_conditioning != 'class_names':
                         prompts = []
@@ -297,15 +263,14 @@ def main():
                     else:
                         bpe_decoded_prompts = [classes] * batch_size
 
-                    for key in model.model.diffusion_model.xti_cross_attention_target_index_dict:
+                    # add batch information to the cross attention target index dict
+                    for key in model.model.diffusion_model.cross_attention_target_index_dict:
                         key.plot_dict['sample_names'] = img_id_batch
-                        # key.plot_dict['sample_names'] = img_names
-                        key.plot_dict['include_eos'] = opt.include_eos # TODO check if can be moved up
+                        key.plot_dict['include_eos'] = opt.include_eos  # TODO check if can be moved up
 
                     start_codes = []
                     for ii, img_id in enumerate(img_id_batch):
                         start_codes.append(load_image(f'{pascal_img_path}/{img_id}.jpg'))
-                        # start_codes.append(load_image(f'./{img_names[ii]}.jpg'))
                     start_codes = torch.cat(start_codes, dim=0)
 
                     shape = [opt.C, opt.H // opt.f, opt.W // opt.f]
@@ -318,13 +283,11 @@ def main():
                                                      unconditional_conditioning=uc,
                                                      eta=opt.ddim_eta,
                                                      x_T=start_codes,
+                                                     # pass bpe decoding for naming each token
                                                      prompts=bpe_decoded_prompts,
                                                      tokens=tokens,
                                                      step_range=opt.step_range
                                                      )
-
-                    # x_samples_ddim = model.decode_first_stage(samples_ddim)
-                    # x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
 
                     if not opt.skip_save:
                         for img_id in img_id_batch:
@@ -333,23 +296,17 @@ def main():
                                 os.symlink(img_path, os.path.join(sample_path, f'{img_id}.jpg'))
                             base_count += 1
 
-                        # for img_name in img_names:
-                        #     img_path = os.path.join('./', f'{img_name}.jpg')
-                        #     if not os.path.exists(os.path.join(sample_path, f'{img_name}.jpg')):
-                        #         os.symlink(img_path, os.path.join(sample_path, f'{img_name}.jpg'))
-                        #     base_count += 1
-
                         # for x_sample in x_samples_ddim:
                         #     x_sample = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
                         #     Image.fromarray(x_sample.astype(np.uint8)).save(
                         #         os.path.join(sample_path, f"{base_count:05}.jpg"))
                         #     base_count += 1
 
-                toc = time.time()
 
     print(f"Your samples are ready and waiting for you here: \n{outpath} \n"
           f" \nEnjoy.")
 
 
 if __name__ == "__main__":
+    # this script generates cross attention visualizations for images in the pascal VOC dataset
     main()

@@ -702,8 +702,8 @@ class UNetModel(nn.Module):
 
         self.visualize_ca = visualize_ca
         self.visualize_ca_params = visualize_ca_params if visualize_ca_params is not None else {}
-        self.xti_block_target_index_dict = {}
-        self.xti_cross_attention_target_index_dict = {}
+        self.block_target_index_dict = {}
+        self.cross_attention_target_index_dict = {}
         self.initialize_cross_attention_tracking()
 
     def initialize_cross_attention_tracking(self):
@@ -711,17 +711,17 @@ class UNetModel(nn.Module):
         c = 0
         for block in [self.input_blocks, self.middle_block, self.output_blocks]:
             for bl_module in block:
-                self.xti_block_target_index_dict[bl_module] = c
+                self.block_target_index_dict[bl_module] = c
                 for name, module in bl_module.named_modules():
                     if type(module) == ldm_cross_attention.modules.attention.CrossAttention and 'attn2' in name:
-                        self.xti_cross_attention_target_index_dict[module] = c
+                        self.cross_attention_target_index_dict[module] = c
                         module.plot_dict = {'ca_num': c, "visualize": self.visualize_ca}  # TODO add save_dir, batch_max, skip_save, whatever else
                         module.plot_dict.update(self.visualize_ca_params)
                         print(c, name, type(module))
                         c += 1
 
     def _update_ca_for_plotting(self, timesteps, **kwargs):
-        for key in self.xti_cross_attention_target_index_dict:
+        for key in self.cross_attention_target_index_dict:
             key.plot_dict['timesteps'] = timesteps
             key.plot_dict['prompts'] = kwargs['prompts']
             key.plot_dict['tokens'] = kwargs['tokens']
@@ -752,7 +752,7 @@ class UNetModel(nn.Module):
             'up64': ['up64_1', 'up64_2', 'up64_3'],
         }
         was_computed_for_timestep = False
-        for key in self.xti_cross_attention_target_index_dict:
+        for key in self.cross_attention_target_index_dict:
             if 'expanded_attn' in key.plot_dict:
                 was_computed_for_timestep = True
                 attn = key.plot_dict['expanded_attn']
