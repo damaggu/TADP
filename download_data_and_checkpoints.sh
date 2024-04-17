@@ -1,7 +1,7 @@
 initial_dir=$(pwd)
 
 # Download checkpoints
-wget https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt - O checkpoints/v1-5-pruned-emaonly.ckpt &&
+wget https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt -O checkpoints/v1-5-pruned-emaonly.ckpt &&
 wget "https://www.dropbox.com/scl/fi/ox7tvyhsoqyhkkrf4z47b/tadp_depth_blipmin40.ckpt?rlkey=rocsl40cdia8mu28culdrjoo3&dl=1" -O checkpoints/tadp_depth_blipmin40.ckpt &&
 wget "https://www.dropbox.com/scl/fi/men4sn4khyht5i1h6cdyh/tadp_seg_blipmin40.ckpt?rlkey=onlpos0js4g3wsm82ycku0rwd&dl=1" -O checkpoints/tadp_seg_blipmin40.ckpt
 

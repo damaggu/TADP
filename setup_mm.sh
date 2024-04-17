@@ -1,3 +1,5 @@
+apt-get update && apt-get install ffmpeg libsm6 libxext6 unar vim htop unzip gcc curl g++ -y
+
 conda init bash && source ~/.bashrc &&
 conda env create -f environment.yaml &&
 conda activate tadp

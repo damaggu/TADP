@@ -37,4 +37,4 @@ dependencies:
     - yapf==0.40.1
     - diffusers==0.24.0
     - pytorch_lightning==1.6.5
-    - lightning==2.2.2
+    - lightning==2.0.0
