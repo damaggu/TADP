@@ -152,7 +152,7 @@ def main():
     parser.add_argument('--timesteps_to_visualize', type=str, default=None,
                         help='by default all timesteps in the step_range will be visualized, but a comma separated list of timesteps can be provided to reduce the number of visualizations')
     parser.add_argument('--include_head_average', action='store_true', default=False, help='include the average of the heads in the visualization')
-    parser.add_argument('--step_range', type=str, default='0,1', help='the range of timesteps for diffusion, one step will not change the actual image much but produces meaningful attention maps')
+    parser.add_argument('--step_range', type=str, default='0,1', help='the range of timesteps for diffusion (0-50), one step will not change the actual image much but produces meaningful attention maps')
 
     parser.add_argument('--only_save_summary', action='store_true', default=False, help='only save the summary figure')
     parser.add_argument('--include_eos', action='store_true', default=False, help='visualize eos token')
