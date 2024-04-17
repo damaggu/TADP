@@ -38,3 +38,4 @@ dependencies:
     - diffusers==0.24.0
     - pytorch_lightning==1.6.5
     - lightning==2.0.0
+    - pandas==2.0.3

@@ -36,6 +36,20 @@ mkdir NighttimeDrivingTest && cd NighttimeDrivingTest
 wget http://data.vision.ee.ethz.ch/daid/NighttimeDriving/NighttimeDrivingTest.zip && unzip NighttimeDrivingTest.zip && rm NighttimeDrivingTest.zip
 cd ../../
 
+
+
+if [ "$1" = "pascal_seg" ]; then
+wget -P ./data/ http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar
+tar -xvf ./data/VOCtrainval_11-May-2012.tar -C ./data/
+wget -O ./data/SegmentationClassAug.zip https://www.dropbox.com/s/oeu149j8qtbs1x0/SegmentationClassAug.zip?dl=0
+unzip ./data/SegmentationClassAug.zip "SegmentationClassAug/*" -d ./data
+rm -rf ./data/VOCdevkit/VOC2012/SegmentationClass
+mv ./data/SegmentationClassAug ./data/VOCdevkit/VOC2012/SegmentationClass
+cp trainaug.txt ./data/VOCdevkit/VOC2012/ImageSets/Segmentation/
+fi
+
+
+
 # download and put cityscapes zips in /data/cityscapes/
 mv ./data/cityscapes/gtFine_trainvaltest/gtFine ./data/cityscapes/
 mv ./data/cityscapes/leftImg8bit_trainvaltest/leftImg8bit ./data/cityscapes/
