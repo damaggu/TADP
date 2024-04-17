@@ -15,7 +15,7 @@ from ldm_cross_attention.util import instantiate_from_config
 from ldm_cross_attention.models.diffusion.ddim import DDIMSampler
 from ldm_cross_attention.models.diffusion.plms import PLMSSampler
 import torchvision
-from misc.ca_analysis_utils import TextConditioningWrapper
+from ldm_cross_attention.ca_analysis_utils import TextConditioningWrapper
 from datasets.VOCDataset import classes
 import json
 
@@ -123,13 +123,13 @@ def main():
     parser.add_argument(
         "--config",
         type=str,
-        default="stable_diffusion/configs/stable-diffusion/v1-cross_attention_inference.yaml",
+        default="ldm_cross_attention/v1-cross_attention_inference.yaml",
         help="path to config which constructs model",
     )
     parser.add_argument(
         "--ckpt",
         type=str,
-        default="stable_diffusion/models/ldm/stable-diffusion-v1-4/model.ckpt",
+        default="checkpoints/v1-5-pruned-emaonly.ckpt",
         help="path to checkpoint of model",
     )
     parser.add_argument(
@@ -178,7 +178,7 @@ def main():
 
     parser.add_argument('--only_save_summary', action='store_true', default=False)
     parser.add_argument('--include_eos', action='store_true', default=False)
-    parser.add_argument('--class_embedding_path', type=str, default='./data/pascal_class_embeddings.pth')
+    parser.add_argument('--class_embedding_path', type=str, default='./TADP/vpd/pascal_class_embeddings.pth')
 
     #       [  1,  21,  41,  61,  81, 101, 121, 141, 161, 181, 201, 221, 241,  ## 13, 3 * 13 + 1 * 11 = 50
     #        261, 281, 301, 321, 341, 361, 381, 401, 421, 441, 461, 481, 501,
