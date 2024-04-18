@@ -56,7 +56,7 @@ for box, label, score in zip(boxes, labels, scores):
     rect = patches.Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1], linewidth=1, edgecolor='r',
                              facecolor='none')
     ax.add_patch(rect)
-    ax.text(box[0], box[1], f'{label} {score:.2f}', color='r')
+    ax.text(box[0], box[1], f'{label} {score:.2f}', color='r', fontsize=8)
 plt.show()
 
 print(a)
