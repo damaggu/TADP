@@ -113,7 +113,10 @@ class CustomFasterRCNN(FasterRCNN):
         else:
             return self.eager_outputs(losses, detections)
 
+
 hacky = False
+
+
 class TADPObj(pl.LightningModule):
 
     def __init__(self,
@@ -410,47 +413,50 @@ class TADPObj(pl.LightningModule):
 
         return enc_mid_channels, enc_end_channels
 
-    def create_text_embeddings(self, latents, img_metas=None, captions=None):
+    def create_text_embeddings(self, latents, img_metas=None, captions=None, texts=None):
         text_cond = self.cfg['text_conditioning']
         conds = []
         if 'blip' in text_cond:
-            texts = []
-            _cs = []
-            for img_id in img_metas['img_id']:
-                if self.training or self.cfg['val_dataset_name'] == 'pascal':
-                    text = captions[img_id]['captions']
-                else:
-                    text = self.cross_blip_captions[img_id]['captions']
-                if len(text) > 1:  # TODO: hacky, rm me later?
-                    text = text[0]
-                if ('train' in text_cond and self.training) or not self.training:
-                    if 'watercolor' in text_cond:
-                        text = "a watercolor painting of a " + text[0]
-                        text = [text]
-                    if 'dashcam' in text_cond:
-                        text = "a dashcam photo of a " + text[0]
-                        text = [text]
-                    if 'constructive' in text_cond:
-                        text = "a constructivism painting of a " + text[0]
-                        text = [text]
-                    if 'watercolorTI' in text_cond:
-                        text = "a <watercolor> style painting of a " + text[0]
-                        text = [text]
-                    if 'watercolorDB' in text_cond:
-                        text = "a sks style painting of a " + text[0]
-                        text = [text]
-                    if 'comic' in text_cond:
-                        text = "a comic style painting of a " + text[0]
-                        text = [text]
-                    if 'comicTI' in text_cond:
-                        text = "a <comic> style painting of a " + text[0]
-                        text = [text]
-                    if 'comicDB' in text_cond:
-                        text = "a sks style painting of a " + text[0]
-                        text = [text]
-                c = self.sd_model.get_learned_conditioning(text)
-                texts.append(text)
-                _cs.append(c)
+            if texts is not None:
+                _cs = [self.sd_model.get_learned_conditioning(text) for text in texts]
+            else:
+                texts = []
+                _cs = []
+                for img_id in img_metas['img_id']:
+                    if self.training or self.cfg['val_dataset_name'] == 'pascal':
+                        text = captions[img_id]['captions']
+                    else:
+                        text = self.cross_blip_captions[img_id]['captions']
+                    if len(text) > 1:  # TODO: hacky, rm me later?
+                        text = text[0]
+                    if ('train' in text_cond and self.training) or not self.training:
+                        if 'watercolor' in text_cond:
+                            text = "a watercolor painting of a " + text[0]
+                            text = [text]
+                        if 'dashcam' in text_cond:
+                            text = "a dashcam photo of a " + text[0]
+                            text = [text]
+                        if 'constructive' in text_cond:
+                            text = "a constructivism painting of a " + text[0]
+                            text = [text]
+                        if 'watercolorTI' in text_cond:
+                            text = "a <watercolor> style painting of a " + text[0]
+                            text = [text]
+                        if 'watercolorDB' in text_cond:
+                            text = "a sks style painting of a " + text[0]
+                            text = [text]
+                        if 'comic' in text_cond:
+                            text = "a comic style painting of a " + text[0]
+                            text = [text]
+                        if 'comicTI' in text_cond:
+                            text = "a <comic> style painting of a " + text[0]
+                            text = [text]
+                        if 'comicDB' in text_cond:
+                            text = "a sks style painting of a " + text[0]
+                            text = [text]
+                    c = self.sd_model.get_learned_conditioning(text)
+                    texts.append(text)
+                    _cs.append(c)
             c = torch.cat(_cs, dim=0)
             conds.append(c)
 
@@ -469,9 +475,7 @@ class TADPObj(pl.LightningModule):
         c_crossattn = torch.cat(conds, dim=1)
         return c_crossattn
 
-    def extract_feat(self, img, img_metas=None):
-        if img_metas['img_id'][0] == '2011_002362':
-            print(';')
+    def extract_feat(self, img, img_metas=None, texts=None):
         """Extract features from images."""
         if self.cfg.get('use_scaled_encode', False):
             with torch.no_grad():
@@ -481,14 +485,12 @@ class TADPObj(pl.LightningModule):
                 latents = self.encoder_vq.encode(img)
             latents = latents.mode().detach()
 
-        # TODO: be careful, hacky zone!!!!!
         viz = False
-
         blip_captions = None
         if 'blip' in self.cfg['text_conditioning']:
             blip_captions = self.blip_captions
 
-        c_crossattn = self.create_text_embeddings(latents, img_metas=img_metas, captions=blip_captions)
+        c_crossattn = self.create_text_embeddings(latents, img_metas=img_metas, captions=blip_captions, texts=texts)
 
         t = torch.from_numpy(np.array([1])).to(img.device)
 
@@ -623,9 +625,37 @@ class TADPObj(pl.LightningModule):
 
         return x, y, orig_images.tensors
 
+    def inference(self, img, captions=None):
+        x = [torchvision.transforms.ToTensor()(x) for x in img]
 
-    def inference(self, img):
-        pass
+        orig_images = [torchvision.transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                                        std=[0.229, 0.224, 0.225])(x) for x in x]
+        orig_images = [datapoints.Image(x) for x in orig_images]
+
+        from torchvision.transforms import v2 as T
+        _size = 512
+        trans = T.Compose(
+            [
+                T.Resize((_size, _size)),
+            ]
+        )
+        orig_images = trans(orig_images)
+
+        orig_images = torch.stack(orig_images)
+        orig_images = torchvision.models.detection.image_list.ImageList(orig_images,
+                                                                        image_sizes=[(_size, _size)] * len(orig_images))
+
+        orig_images_tensors = orig_images.tensors.to(self.device)
+
+        features = self.extract_feat(orig_images_tensors, texts=captions)
+
+        feat_names = ['0', '1', '2', '3']
+        features = dict(zip(feat_names, features))
+
+        features = self.fpn(features)
+        x = self.decode_head(images=orig_images, images_tensor=orig_images_tensors, features=features)
+
+        return x
 
     def initialize_loss(self):
         loss = smp.losses.FocalLoss(mode="multiclass", ignore_index=self.ignore_index)
