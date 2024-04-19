@@ -51,43 +51,43 @@ GROUP_NAME=vpd_cityscapes RUN_NAME=nighttime_dreambooth_train_DBtrainToken_80K_5
 
 ## watercolor
 # machine 1 - clip+ dashcam on watercolor
-python train_objectdetection_fasterRCNN.py --batch_size 2 --freeze_backbone 0 --epochs 10 --check_val_every_n_epoch 1 --model_name VPDObj --text_conditioning blip+dashcam --cross_domain_target watercolor --val_dataset_name cross --blip_caption_path blip_captions/pascal_object_captions_min40_max77.json --cross_blip_caption_path blip_captions/watercolor_captions.json --save_checkpoint_path ./TextCond_BlipANDDashcam_Watercolor
+python train_tadp.py --task detection --batch_size 2 --freeze_backbone 0 --epochs 10 --check_val_every_n_epoch 1 --model_name VPDObj --text_conditioning blip+dashcam --cross_domain_target watercolor --val_dataset_name cross --blip_caption_path blip_captions/pascal_object_captions_min40_max77.json --cross_blip_caption_path blip_captions/watercolor_captions.json --save_checkpoint_path ./TextCond_BlipANDDashcam_Watercolor
 
 # machine 3 - blip and watercolor prompt on watercolor
-python train_objectdetection_fasterRCNN.py --batch_size 2 --freeze_backbone 0 --epochs 10 --check_val_every_n_epoch 1 --model_name VPDObj --text_conditioning blip+watercolor --cross_domain_target watercolor --val_dataset_name cross --blip_caption_path blip_captions/pascal_object_captions_min40_max77.json --cross_blip_caption_path blip_captions/watercolor_captions.json  --save_checkpoint_path ./TextCond_BlipANDWatercolor_Watercolor
+python train_tadp.py --task detection --batch_size 2 --freeze_backbone 0 --epochs 10 --check_val_every_n_epoch 1 --model_name VPDObj --text_conditioning blip+watercolor --cross_domain_target watercolor --val_dataset_name cross --blip_caption_path blip_captions/pascal_object_captions_min40_max77.json --cross_blip_caption_path blip_captions/watercolor_captions.json  --save_checkpoint_path ./TextCond_BlipANDWatercolor_Watercolor
 
 # machine 5 just blip on watercolor
 
-python train_objectdetection_fasterRCNN.py --batch_size 2 --freeze_backbone 0 --epochs 10 --check_val_every_n_epoch 1 --model_name VPDObj --text_conditioning blip --cross_domain_target watercolor --val_dataset_name cross --blip_caption_path blip_captions/pascal_object_captions_min40_max77.json --cross_blip_caption_path blip_captions/watercolor_captions.json --save_checkpoint_path ./TextCond_Blip_Watercolor
+python train_tadp.py --task detection --batch_size 2 --freeze_backbone 0 --epochs 10 --check_val_every_n_epoch 1 --model_name VPDObj --text_conditioning blip --cross_domain_target watercolor --val_dataset_name cross --blip_caption_path blip_captions/pascal_object_captions_min40_max77.json --cross_blip_caption_path blip_captions/watercolor_captions.json --save_checkpoint_path ./TextCond_Blip_Watercolor
 
 # machine 8 - constructism on watercolor
-python train_objectdetection_fasterRCNN.py --batch_size 2 --freeze_backbone 0 --epochs 10 --check_val_every_n_epoch 1 --model_name VPDObj --text_conditioning blip+constructive --cross_domain_target watercolor --val_dataset_name cross --blip_caption_path blip_captions/pascal_object_captions_min40_max77.json --cross_blip_caption_path blip_captions/watercolor_captions.json --save_checkpoint_path ./TextCond_BlipANDConstructive_Watercolor
+python train_tadp.py --task detection --batch_size 2 --freeze_backbone 0 --epochs 10 --check_val_every_n_epoch 1 --model_name VPDObj --text_conditioning blip+constructive --cross_domain_target watercolor --val_dataset_name cross --blip_caption_path blip_captions/pascal_object_captions_min40_max77.json --cross_blip_caption_path blip_captions/watercolor_captions.json --save_checkpoint_path ./TextCond_BlipANDConstructive_Watercolor
 
 # machine 9 DB on water olor
 
-python train_objectdetection_fasterRCNN.py --dreambooth_checkpoint pascal_watercolor_10_highLR.ckpt --batch_size 2 --freeze_backbone 0 --epochs 10 --check_val_every_n_epoch 1 --model_name VPDObj --text_conditioning blip+watercolorDB --cross_domain_target watercolor --val_dataset_name cross --blip_caption_path blip_captions/pascal_object_captions_min40_max77.json --cross_blip_caption_path blip_captions/watercolor_captions.json --save_checkpoint_path ./TextCond_BlipANDWatercolorDB_Watercolor
+python train_tadp.py --task detection --dreambooth_checkpoint pascal_watercolor_10_highLR.ckpt --batch_size 2 --freeze_backbone 0 --epochs 10 --check_val_every_n_epoch 1 --model_name VPDObj --text_conditioning blip+watercolorDB --cross_domain_target watercolor --val_dataset_name cross --blip_caption_path blip_captions/pascal_object_captions_min40_max77.json --cross_blip_caption_path blip_captions/watercolor_captions.json --save_checkpoint_path ./TextCond_BlipANDWatercolorDB_Watercolor
 
 ## comic
 # machine 2 - clip+ dashcam on comic
-python train_objectdetection_fasterRCNN.py --batch_size 2 --freeze_backbone 0 --epochs 10 --check_val_every_n_epoch 1 --model_name VPDObj --text_conditioning blip+dashcam --cross_domain_target comic --val_dataset_name cross --blip_caption_path blip_captions/pascal_object_captions_min40_max77.json --cross_blip_caption_path blip_captions/comic_captions.json --save_checkpoint_path ./TextCond_BlipANDDashcam_Comic
+python train_tadp.py --task detection --batch_size 2 --freeze_backbone 0 --epochs 10 --check_val_every_n_epoch 1 --model_name VPDObj --text_conditioning blip+dashcam --cross_domain_target comic --val_dataset_name cross --blip_caption_path blip_captions/pascal_object_captions_min40_max77.json --cross_blip_caption_path blip_captions/comic_captions.json --save_checkpoint_path ./TextCond_BlipANDDashcam_Comic
 
 # machine 4 - just blip on comic
-python train_objectdetection_fasterRCNN.py --batch_size 2 --freeze_backbone 0 --epochs 10 --check_val_every_n_epoch 1 --model_name VPDObj --text_conditioning blip+comic --cross_domain_target comic --val_dataset_name cross --blip_caption_path blip_captions/pascal_object_captions_min40_max77.json --cross_blip_caption_path  blip_captions/comic_captions.json --save_checkpoint_path ./TextCond_BlipANDComic_Comic
+python train_tadp.py --task detection --batch_size 2 --freeze_backbone 0 --epochs 10 --check_val_every_n_epoch 1 --model_name VPDObj --text_conditioning blip+comic --cross_domain_target comic --val_dataset_name cross --blip_caption_path blip_captions/pascal_object_captions_min40_max77.json --cross_blip_caption_path  blip_captions/comic_captions.json --save_checkpoint_path ./TextCond_BlipANDComic_Comic
 
 # machine 7 constructive on comic --  on pascal check
 
-python train_objectdetection_fasterRCNN.py --batch_size 2 --freeze_backbone 0 --epochs 10 --check_val_every_n_epoch 1 --model_name VPDObj --text_conditioning blip+constructive --cross_domain_target comic --val_dataset_name cross --blip_caption_path blip_captions/pascal_object_captions_min40_max77.json --cross_blip_caption_path blip_captions/comic_captions.json --save_checkpoint_path ./TextCond_BlipANDConstructive_Comic
+python train_tadp.py --task detection --batch_size 2 --freeze_backbone 0 --epochs 10 --check_val_every_n_epoch 1 --model_name VPDObj --text_conditioning blip+constructive --cross_domain_target comic --val_dataset_name cross --blip_caption_path blip_captions/pascal_object_captions_min40_max77.json --cross_blip_caption_path blip_captions/comic_captions.json --save_checkpoint_path ./TextCond_BlipANDConstructive_Comic
 
 # machine6 on comic
 
-python train_objectdetection_fasterRCNN.py --batch_size 2 --freeze_backbone 0 --epochs 10 --check_val_every_n_epoch 1 --model_name VPDObj --text_conditioning blip --cross_domain_target comic --val_dataset_name cross --blip_caption_path blip_captions/pascal_object_captions_min40_max77.json --cross_blip_caption_path blip_captions/comic_captions.json --save_checkpoint_path ./TextCond_Blip_Comic
+python train_tadp.py --task detection --batch_size 2 --freeze_backbone 0 --epochs 10 --check_val_every_n_epoch 1 --model_name VPDObj --text_conditioning blip --cross_domain_target comic --val_dataset_name cross --blip_caption_path blip_captions/pascal_object_captions_min40_max77.json --cross_blip_caption_path blip_captions/comic_captions.json --save_checkpoint_path ./TextCond_Blip_Comic
 
 # machine 10 DB on comic
 
-python train_objectdetection_fasterRCNN.py --dreambooth_checkpoint pascal_comic_10_highLR.ckpt --batch_size 2 --freeze_backbone 0 --epochs 10 --check_val_every_n_epoch 1 --model_name VPDObj --text_conditioning blip+comicDB --cross_domain_target comic --val_dataset_name cross --blip_caption_path blip_captions/pascal_object_captions_min40_max77.json --cross_blip_caption_path blip_captions/comic_captions.json --save_checkpoint_path ./TextCond_BlipANDComicDB_Comic
+python train_tadp.py --task detection --dreambooth_checkpoint pascal_comic_10_highLR.ckpt --batch_size 2 --freeze_backbone 0 --epochs 10 --check_val_every_n_epoch 1 --model_name VPDObj --text_conditioning blip+comicDB --cross_domain_target comic --val_dataset_name cross --blip_caption_path blip_captions/pascal_object_captions_min40_max77.json --cross_blip_caption_path blip_captions/comic_captions.json --save_checkpoint_path ./TextCond_BlipANDComicDB_Comic
 
 # machine extra 1 - TI on comic
-python train_objectdetection_fasterRCNN.py --batch_size 2 --freeze_backbone 0 --epochs 10 --check_val_every_n_epoch 1 --model_name VPDObj --text_conditioning blip+comicTI --cross_domain_target comic --val_dataset_name cross --blip_caption_path blip_captions/pascal_object_captions_min40_max77.json --save_checkpoint_path ./TextCond_TI_Comic --textual_inversion_token_path ./TI_tokens/pascal_comic/learned_embeds-steps-3000.bin
+python train_tadp.py --task detection --batch_size 2 --freeze_backbone 0 --epochs 10 --check_val_every_n_epoch 1 --model_name VPDObj --text_conditioning blip+comicTI --cross_domain_target comic --val_dataset_name cross --blip_caption_path blip_captions/pascal_object_captions_min40_max77.json --save_checkpoint_path ./TextCond_TI_Comic --textual_inversion_token_path ./TI_tokens/pascal_comic/learned_embeds-steps-3000.bin
 
 # my TI watercolor
-python train_objectdetection_fasterRCNN.py --batch_size 2 --freeze_backbone 0 --epochs 10 --check_val_every_n_epoch 1 --model_name VPDObj --text_conditioning blip+watercolorTI --cross_domain_target watercolor --val_dataset_name cross --save_checkpoint_path ./TextCond_TI_Watercolor --textual_inversion_token_path ./TI_tokens/pascal_watercolor/learned_embeds-steps-3000.bin
+python train_tadp.py --task detection --batch_size 2 --freeze_backbone 0 --epochs 10 --check_val_every_n_epoch 1 --model_name VPDObj --text_conditioning blip+watercolorTI --cross_domain_target watercolor --val_dataset_name cross --save_checkpoint_path ./TextCond_TI_Watercolor --textual_inversion_token_path ./TI_tokens/pascal_watercolor/learned_embeds-steps-3000.bin
