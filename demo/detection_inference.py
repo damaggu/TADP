@@ -25,7 +25,7 @@ cfg['dreambooth_checkpoint'] = None
 cfg['blip_caption_path'] = 'captions/voc_extended_train_val_captions.json'
 cfg['cross_blip_caption_path'] = 'captions/watercolor_captions.json'
 cfg['text_conditioning'] = "blip"
-cfg['textual_inversion_token_path'] = "tokens/water_color_50/"
+cfg['textual_inversion_token_path'] = "tokens/water_color/"
 cfg['textual_inversion_caption_path'] = "textual_inversion_captions/voc_extended_captions.json"
 
 detection_model = TADPObj(class_embedding_path="./data/pascal_class_embeddings.pth", cfg=cfg, class_names=voc_classes)
