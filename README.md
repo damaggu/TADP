@@ -50,6 +50,7 @@ export PYTHONPATH=$PYTHONPATH:$(pwd)
 python demo/depth_inference.py
 python demo/seg_inference.py
 python demo/detection_inference.py
+python demo/seg_inference_driving.py
 ```
 
 ### Whole data set testing
