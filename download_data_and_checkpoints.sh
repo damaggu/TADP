@@ -1,5 +1,8 @@
 initial_dir=$(pwd)
 
+mkdir -p data
+mkdir -p checkpoints
+
 # Download checkpoints
 wget https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt -O checkpoints/v1-5-pruned-emaonly.ckpt &&
 wget "https://www.dropbox.com/scl/fi/ox7tvyhsoqyhkkrf4z47b/tadp_depth_blipmin40.ckpt?rlkey=rocsl40cdia8mu28culdrjoo3&dl=1" -O checkpoints/tadp_depth_blipmin40.ckpt &&
@@ -32,18 +35,6 @@ gdown https://drive.google.com/uc?id=16JqgvqtICEsyi6dX85F6BB7AwI0qF9aP &&
 unzip sync.zip && rm sync.zip
 fi
 
-
-if [ "$1" = "cross" ]; then
-cd data
-mkdir dark_zurich && cd dark_zurich
-wget https://data.vision.ee.ethz.ch/csakarid/shared/GCMA_UIoU/Dark_Zurich_val_anon.zip && unzip Dark_Zurich_val_anon.zip && rm Dark_Zurich_val_anon.zip
-cd ../
-mkdir NighttimeDrivingTest && cd NighttimeDrivingTest
-wget http://data.vision.ee.ethz.ch/daid/NighttimeDriving/NighttimeDrivingTest.zip && unzip NighttimeDrivingTest.zip && rm NighttimeDrivingTest.zip
-cd ../../
-
-
-
 if [ "$1" = "pascal_seg" ]; then
 wget -P ./data/ http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar
 tar -xvf ./data/VOCtrainval_11-May-2012.tar -C ./data/
@@ -51,25 +42,55 @@ wget -O ./data/SegmentationClassAug.zip https://www.dropbox.com/s/oeu149j8qtbs1x
 unzip ./data/SegmentationClassAug.zip "SegmentationClassAug/*" -d ./data
 rm -rf ./data/VOCdevkit/VOC2012/SegmentationClass
 mv ./data/SegmentationClassAug ./data/VOCdevkit/VOC2012/SegmentationClass
-cp trainaug.txt ./data/VOCdevkit/VOC2012/ImageSets/Segmentation/
+cp datasets/trainaug.txt ./data/VOCdevkit/VOC2012/ImageSets/Segmentation/
 fi
 
 
+if [ "$1" = "cross_cityscapes" ]; then
+# download and put cityscapes zips in
+if [ -d /data/cityscapes/ ]; then
+    echo "Cannot find data/cityscapes directory. Make sure you have downloaded the data and rerun the script."
+else
+  echo "Found Cityscapes data. Extracting..."
+  mv ./data/cityscapes/gtFine_trainvaltest/gtFine ./data/cityscapes/
+  mv ./data/cityscapes/leftImg8bit_trainvaltest/leftImg8bit ./data/cityscapes/
+  mv ./data/cityscapes/leftImg8bit_trainextra/leftImg8bit ./data/cityscapes/
+  rm -rf ./data/cityscapes/gtFine_trainvaltest
+  rm -rf ./data/cityscapes/leftImg8bit_trainvaltest
+  rm -rf ./data/cityscapes/leftImg8bit_trainextra
+  git clone https://github.com/open-mmlab/mmsegmentation.git
+  python -m pip install cityscapesscripts
+  mim install mmengine
+  python mmsegmentation/tools/dataset_converters/cityscapes.py data/cityscapes --nproc 8
+fi
+  cd data &&
+  mkdir dark_zurich && cd dark_zurich &&
+  wget https://data.vision.ee.ethz.ch/csakarid/shared/GCMA_UIoU/Dark_Zurich_val_anon.zip && unzip Dark_Zurich_val_anon.zip && rm Dark_Zurich_val_anon.zip
+  cd ../../
 
-# download and put cityscapes zips in /data/cityscapes/
-mv ./data/cityscapes/gtFine_trainvaltest/gtFine ./data/cityscapes/
-mv ./data/cityscapes/leftImg8bit_trainvaltest/leftImg8bit ./data/cityscapes/
-mv ./data/cityscapes/leftImg8bit_trainextra/leftImg8bit ./data/cityscapes/
-rm -rf ./data/cityscapes/gtFine_trainvaltest
-rm -rf ./data/cityscapes/leftImg8bit_trainvaltest
-rm -rf ./data/cityscapes/leftImg8bit_trainextra
-git clone https://github.com/open-mmlab/mmsegmentation.git
-python -m pip install cityscapesscripts
-mim install mmengine
-python mmsegmentation/tools/dataset_converters/cityscapes.py data/cityscapes --nproc 8
+  cd data && mkdir NighttimeDrivingTest && cd NighttimeDrivingTest
+  wget http://data.vision.ee.ethz.ch/daid/NighttimeDriving/NighttimeDrivingTest.zip && unzip NighttimeDrivingTest.zip && rm NighttimeDrivingTest.zip
+  cd ../../
+fi
 
-wget https://data.vision.ee.ethz.ch/csakarid/shared/GCMA_UIoU/Dark_Zurich_train_anon.zip
-unzip Dark_Zurich_train_anon.zip
+
+if [ "$1" = "cross_pascal" ]; then
+wget -P ./data/ http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar
+tar -xvf ./data/VOCtrainval_11-May-2012.tar -C ./data/
+
+wget -O ./data/SegmentationClassAug.zip https://www.dropbox.com/s/oeu149j8qtbs1x0/SegmentationClassAug.zip?dl=0
+unzip ./data/SegmentationClassAug.zip "SegmentationClassAug/*" -d ./data
+
+rm -rf ./data/VOCdevkit/VOC2012/SegmentationClass
+mv ./data/SegmentationClassAug ./data/VOCdevkit/VOC2012/SegmentationClass
+
+cp datasets/trainaug.txt ./data/VOCdevkit/VOC2012/ImageSets/Segmentation/
+
+git clone https://github.com/naoto0804/cross-domain-detection.git data/cross-domain-detection
+bash data/cross-domain-detection/datasets/prepare.sh
+mv watercolor data/cross-domain-detection/datasets/
+mv comic data/cross-domain-detection/datasets/
+mv clipart data/cross-domain-detection/datasets/
 fi
 
 cd "$initial_dir"

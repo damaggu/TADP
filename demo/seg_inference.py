@@ -31,7 +31,7 @@ if __name__ == "__main__":
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     model = load_tadp_seg_for_inference("checkpoints/tadp_seg_blipmin40.ckpt", device=device)
 
-    img = cv2.imread("demo/example_img.jpg")
+    img = cv2.imread("demo/segmentation_example.jpg")
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     caption = "a large stone house with red roof and white trimming on the front of the house and a green lawn in front of the house with a fence on the side of the house and a tree in the middle of the lawn"
 

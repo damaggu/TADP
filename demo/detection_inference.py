@@ -14,7 +14,7 @@ pl.seed_everything(42)
 cfg = yaml.load(open("./sd_tune.yaml", "r"), Loader=yaml.FullLoader)
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 load_checkpoint_path = 'checkpoints/tadp_watercolor.pt'
-img = Image.open("demo/189366231.jpg")
+img = Image.open("demo/watercolor_example.jpg")
 threshold = 0.5 # threshold for detection
 
 # parameters for TADP object detection model

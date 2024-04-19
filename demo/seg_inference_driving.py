@@ -12,7 +12,7 @@ additional_args = {
 model = load_tadp_seg_for_inference("checkpoints/tadp_nighttimeDriving.pth", device=device,
                                     additional_args=additional_args)
 
-img = cv2.imread("demo/0_frame_0205_leftImg8bit.png")
+img = cv2.imread("demo/nighttime_example.png")
 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 caption = "a person crossing the street, a car driving on the road, a traffic light, a train in the background"
 

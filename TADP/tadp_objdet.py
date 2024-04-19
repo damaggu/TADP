@@ -26,13 +26,13 @@ from torchvision import datapoints
 from torchvision.models.detection import FasterRCNN
 from torchvision.models.detection.anchor_utils import AnchorGenerator
 from torchvision.ops import FeaturePyramidNetwork
+from detectron2.structures.instances import Instances
+from ldm.util import instantiate_from_config
 
 from TADP.utils.detection_utils import REDUCED_CLASS_NAMES, DETECTRON_VOC_CLASS_NAMES
 from TADP.utils.detection_utils import create_bounding_boxes_from_masks, annotations_to_boxes
-from TADP.utils.pascal_voc_evaluation import PascalVOCDetectionEvaluator
 from TADP.vpd.models import UNetWrapper, TextAdapter
-from detectron2.structures.instances import Instances
-from ldm.util import instantiate_from_config
+from datasets.pascal_voc_evaluation import PascalVOCDetectionEvaluator
 
 
 class CustomFasterRCNN(FasterRCNN):
