@@ -1,3 +1,7 @@
+import os
+
+os.chdir("..")  # make sure we are in project root, so we can load TADP module
+
 import lightning.pytorch as pl
 import torch
 import yaml
