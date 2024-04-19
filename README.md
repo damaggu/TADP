@@ -25,9 +25,9 @@
 Official implementation of the paper **Text-Image Alignment for Diffusion-based Perception (CVPR 2024)**.
 
 
-[Neehar Kondapaneni](https://nkondapa.github.io/),
-[Markus Marks](https://damaggu.github.io/),
-[Manuel Knott](https://scholar.google.com/citations?user=e9xfiKEAAAAJ&hl=en),
+[Neehar Kondapaneni*](https://nkondapa.github.io/),
+[Markus Marks*](https://damaggu.github.io/),
+[Manuel Knott*](https://scholar.google.com/citations?user=e9xfiKEAAAAJ&hl=en),
 [Rogerio Guimaraes](https://rogeriojr.com/),
 [Pietro Perona](https://www.vision.caltech.edu/)
 
