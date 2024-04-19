@@ -1,4 +1,4 @@
-# Text-Image Alignment for Diffusion-based Perception (TADP)
+# Text-image Alignment for Diffusion-based Perception (TADP)
 
 [![Project Page](https://img.shields.io/badge/Project%20Page-Link)](https://www.vision.caltech.edu/tadp/)
 [![Paper](https://img.shields.io/badge/arXiv-PDF-b31b1b)](https://arxiv.org/abs/2310.00031)
@@ -68,6 +68,7 @@ please refer to the [test_tadp_mm.py](test_tadp_mm.py) and [test_tadp_depth.py](
 
 ## Training
 
+TODO
 
 ## Experiments
 

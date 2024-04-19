@@ -18,6 +18,3 @@ pip install -r requirements.txt
 git clone https://github.com/damaggu/stable-diffusion
 mv stable-diffusion stable_diffusion
 cp -r stable_diffusion/ldm/ ./
-
-export PYTHONPATH=$PYTHONPATH:$(pwd)
-python create_class_embeddings.py --dataset pascal
