@@ -47,9 +47,11 @@ def _get_seg_args():
     )
 
 
-def load_tadp_seg_for_inference(ckpt_path: str, device="cuda"):
+def load_tadp_seg_for_inference(ckpt_path: str, device="cuda", additional_args=None):
     args = _get_seg_args()
     args.ckpt_path = ckpt_path
+    if additional_args is not None:
+        args.__dict__.update(additional_args)
 
     cfg = mmcv.Config.fromfile(args.config)
     if args.cfg_options is not None:
