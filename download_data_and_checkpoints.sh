@@ -4,7 +4,8 @@ initial_dir=$(pwd)
 wget https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt -O checkpoints/v1-5-pruned-emaonly.ckpt &&
 wget "https://www.dropbox.com/scl/fi/ox7tvyhsoqyhkkrf4z47b/tadp_depth_blipmin40.ckpt?rlkey=rocsl40cdia8mu28culdrjoo3&dl=1" -O checkpoints/tadp_depth_blipmin40.ckpt &&
 wget "https://www.dropbox.com/scl/fi/men4sn4khyht5i1h6cdyh/tadp_seg_blipmin40.ckpt?rlkey=onlpos0js4g3wsm82ycku0rwd&dl=1" -O checkpoints/tadp_seg_blipmin40.ckpt &&
-wget "https://www.dropbox.com/scl/fi/t93l3wcfkrvybfol4udes/tadp_watercolor.pt?rlkey=gjr4yhextamxck545etxe5rfh&dl=1" -O checkpoints/tadp_watercolor.pt
+wget "https://www.dropbox.com/scl/fi/t93l3wcfkrvybfol4udes/tadp_watercolor.pt?rlkey=gjr4yhextamxck545etxe5rfh&dl=1" -O checkpoints/tadp_watercolor.pt &&
+wget "https://www.dropbox.com/scl/fi/y6ah1z3wrig80op4g2w7x/tadp_nighttimeDriving.pth?rlkey=h0uzl69jvi3ulptvrxgjbwaoo&dl=1" -O tadp_nighttimeDriving.pth
 
 # tokens
 wget "https://www.dropbox.com/scl/fi/f9vema0ok1obeh69y2n7j/tokens.zip?rlkey=6fqy1rysmqznz238cisq3kgf2&dl=1" -O tokens.zip &&
