@@ -36,6 +36,14 @@ Official implementation of the paper **Text-Image Alignment for Diffusion-based 
 
 ## Setup
 
+We have 2 seperate shell scripts for setting up the environment. 
+
+- `setup.sh` for setting up the environment for Pascal VOC Semantic Segmentation and Watercolor2k and Comic2k Object Detection.
+- `setup_mm.sh` for setting up the environment for ADE20k Semantic Segmentation, NYUv2 Depth Estimation, Nighttime Driving, and Dark Zurich Semantic Segmentation (using MM libraries).
+
+```bash
+bash setup.sh
+```
 
 ## Inference
 
