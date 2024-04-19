@@ -1,0 +1,41 @@
+is_debug: True
+seed: 42
+task: segmentation
+decode_head: FPN
+data:
+  train: pascal-seg
+  val: pascal-seg
+  resize: center-crop
+  img_size: 512
+  data_dir: ./data
+  few_shot_n_per_class: null
+  few_shot_percentage: 1.0
+  cityscapes:
+    drop_small_instance_thres: ~ # TODO test with 0.003
+training:
+  batch_size: 1
+  num_workers: 0
+  epochs: 100
+  check_val_every_n_epoch: 1
+  accumulate_grad_batches: 1
+  lr: 0.0001
+  limit_train_batches: 5
+  limit_val_batches: 5
+annotator:
+  type: ground_truth
+stable_diffusion:
+  freeze_encoder: True
+  use_diffusion: True
+  num_train_inference_steps: 10
+  num_val_inference_steps: 30
+  model: runwayml/stable-diffusion-v1-5
+wandb:
+  project: neurips2023
+  entity: vision-lab
+gpt:
+  use_gpt: False
+  openai_api_key: # your openai api key
+  gpt_engine: gpt-3.5-turbo
+  pregenerate_prompts: False
+  n_pregenerate_prompts: 500
+#  n_prompts: 4

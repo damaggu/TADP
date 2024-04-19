@@ -1,0 +1,9 @@
+stable-diffusion
+stable_diffusion
+ldm
+checkpoints
+data
+work_dirs
+wandb
+.idea
+__pycache__/
