@@ -1,11 +1,10 @@
 import cv2
+import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
 from TADP.utils.inference import load_tadp_seg_for_inference
 from datasets.ade_info import PALETTE
-
-device = "cuda"
 
 
 def visualize_prediction(pred: np.ndarray, img: np.ndarray = None):
@@ -28,6 +27,7 @@ def visualize_prediction(pred: np.ndarray, img: np.ndarray = None):
     plt.show()
 
 
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 model = load_tadp_seg_for_inference("checkpoints/tadp_seg_blipmin40.ckpt", device=device)
 
 img = cv2.imread("demo/example_img.jpg")
