@@ -2,6 +2,7 @@
 
 [![Project Page](https://img.shields.io/badge/Project%20Page-Link)](https://www.vision.caltech.edu/tadp/)
 [![Paper](https://img.shields.io/badge/arXiv-PDF-b31b1b)](https://arxiv.org/abs/2310.00031)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1uadQ8iukjmnjEScn1qKWuy9ijcUbPMuN?usp=sharing)
 <!-- [![Open In Colab](doc/badges/badge-colab.svg)](https://colab.research.google.com/drive/...) -->
 <!-- [![Hugging Face (LCM) Space](https://img.shields.io/badge/🤗%20Hugging%20Face(LCM)-Space-yellow)](https://huggingface.co/spaces/...) -->
 <!--[![Hugging Face (LCM) Model](https://img.shields.io/badge/🤗%20Hugging%20Face(LCM)-Model-green)](https://huggingface.co/prs-eth/marigold-lcm-v1-0) -->
