@@ -6,7 +6,7 @@ _base_ = [
 ]
 norm_cfg = dict(type='BN', requires_grad=True)
 model = dict(
-    type='VPDSeg',
+    type='TADPSeg',
     sd_path='checkpoints/v1-5-pruned-emaonly.ckpt',
     neck=dict(
         type='FPN',
