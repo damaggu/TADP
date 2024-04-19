@@ -13,41 +13,36 @@ pl.seed_everything(42)
 
 cfg = yaml.load(open("./sd_tune.yaml", "r"), Loader=yaml.FullLoader)
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+load_checkpoint_path = 'checkpoints/tadp_watercolor.pt'
+img = Image.open("demo/189366231.jpg")
+threshold = 0.5 # threshold for detection
 
+# parameters for TADP object detection model
 cfg["freeze_text_adapter"] = True
+cfg['use_scaled_encode'] = True
+cfg["append_self_attention"] = False
+cfg['dreambooth_checkpoint'] = None
 cfg['blip_caption_path'] = 'captions/voc_extended_train_val_captions.json'
 cfg['cross_blip_caption_path'] = 'captions/watercolor_captions.json'
-cfg["append_self_attention"] = False
 cfg['text_conditioning'] = "blip"
-cfg['textual_inversion_token_path'] = "model_personalization/tokens/water_color_50/"
+cfg['textual_inversion_token_path'] = "tokens/water_color_50/"
 cfg['textual_inversion_caption_path'] = "textual_inversion_captions/voc_extended_captions.json"
-cfg['dreambooth_checkpoint'] = None
-cfg['val_dataset_name'] = "watercolor"
-cfg['use_scaled_encode'] = True
-
-load_checkpoint_path = '/mnt/m4_data/watercolor_checkpoints/checkpoint_epoch_2.pt'
 
 detection_model = TADPObj(class_embedding_path="./data/pascal_class_embeddings.pth", cfg=cfg, class_names=voc_classes)
 detection_model.to(device)
 detection_model.load_state_dict(torch.load(load_checkpoint_path), strict=False)
 detection_model.eval()
 
-img = Image.open("demo/189366231.jpg")
+detections = detection_model.inference([img], captions=["a car on the road"])
 
-# #### testing model
-# x = torch.randn(1, 3, 512, 512).to(device)
-a = detection_model.inference([img], captions=["a car on the road"])
+boxes = detections[0]['boxes'].detach().cpu().numpy()
+labels = detections[0]['labels'].detach().cpu().numpy()
+scores = detections[0]['scores'].detach().cpu().numpy()
 
-boxes = a[0]['boxes'].detach().cpu().numpy()
-labels = a[0]['labels'].detach().cpu().numpy()
-scores = a[0]['scores'].detach().cpu().numpy()
-# threshold boxes at 0.5
-threshold = 0.5
 boxes = boxes[scores > threshold]
 labels = labels[scores > threshold]
 scores = scores[scores > threshold]
 
-# resize image to 512x512
 img = img.resize((512, 512))
 
 fig, ax = plt.subplots(1)
@@ -58,5 +53,3 @@ for box, label, score in zip(boxes, labels, scores):
     ax.add_patch(rect)
     ax.text(box[0], box[1], f'{label} {score:.2f}', color='r', fontsize=8)
 plt.show()
-
-print(a)
