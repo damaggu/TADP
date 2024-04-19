@@ -1,10 +1,3 @@
-import os
-
-os.chdir("..") # make sure we are in project root so we can load TADP module
-# append project root to sys.path
-import sys
-sys.path.append(os.getcwd())
-
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt

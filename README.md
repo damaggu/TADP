@@ -39,11 +39,18 @@ Official implementation of the paper **Text-Image Alignment for Diffusion-based 
 
 ## Inference
 
-If you want to use our models for inference, there are two optoins:
+If you want to use our models for inference, there are two options available:
 
 ### Single image inference
 We provide a simple interface to load our model checkpoints and run inference with custom image and text inputs.
 Please refer to the [demo/](demo/) directory for examples.
+
+```
+export PYTHONPATH=$PYTHONPATH:$(pwd)
+python demo/depth_inference.py
+python demo/seg_inference.py
+python demo/detection_inference.py
+```
 
 ### Whole data set testing
 If you want to generate results for a whole dataset that was used in our study (e.g., ADE20k, NYUv2) using pre-generated captions, 
