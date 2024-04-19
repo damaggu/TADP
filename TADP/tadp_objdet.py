@@ -19,7 +19,7 @@ from diffusers.utils import _get_model_file, DIFFUSERS_CACHE
 ### tadp crossdomain object detection
 from huggingface_hub import hf_hub_download
 from matplotlib import pyplot as plt
-from omegaconf.omegaconf import OmegaConf
+from omegaconf import OmegaConf
 from torch import nn, Tensor
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
 from torchvision import datapoints
