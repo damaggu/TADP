@@ -15,6 +15,7 @@
 
 
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/text-image-alignment-for-diffusion-based/semantic-segmentation-on-nighttime-driving)](https://paperswithcode.com/sota/semantic-segmentation-on-nighttime-driving?p=text-image-alignment-for-diffusion-based)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/text-image-alignment-for-diffusion-based/weakly-supervised-object-detection-on-watercolor2k)](https://paperswithcode.com/sota/weakly-supervised-object-detection-on-watercolor2k?p=text-image-alignment-for-diffusion-based)
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/text-image-alignment-for-diffusion-based/weakly-supervised-object-detection-on-comic2k)](https://paperswithcode.com/sota/weakly-supervised-object-detection-on-comic2k?p=text-image-alignment-for-diffusion-based)	
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/text-image-alignment-for-diffusion-based/semantic-segmentation-on-pascal-voc-2012-val)](https://paperswithcode.com/sota/semantic-segmentation-on-pascal-voc-2012-val?p=text-image-alignment-for-diffusion-based)
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/text-image-alignment-for-diffusion-based/monocular-depth-estimation-on-nyu-depth-v2)](https://paperswithcode.com/sota/monocular-depth-estimation-on-nyu-depth-v2?p=text-image-alignment-for-diffusion-based)
