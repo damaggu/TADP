@@ -224,7 +224,7 @@ def main():
            }
     tcw = TextConditioningWrapper(cfg, model, class_embedding_path=opt.class_embedding_path)
 
-    pascal_img_path = '/home/nkondapa/PycharmProjects/neurips2023_v2/data/VOCdevkit/VOC2012/JPEGImages/'
+    pascal_img_path = 'data/VOCdevkit/VOC2012/JPEGImages/'
     img_id_file = 'data/VOCdevkit/VOC2012/ImageSets/Segmentation/trainaug.txt'
     with open(img_id_file, 'r') as f:
         img_ids = f.readlines()
