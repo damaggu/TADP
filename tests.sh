@@ -5,6 +5,7 @@
 #WANDB_MODE=dryrun python train_tadp_mm.py TADP/mm_configs/seg_ade20k_sanitycheck.py
 
 ###---- TADP Sem. Segmentation Pascal ----###
+#WANDB_MODE=dryrun python train_tadp.py --batch_size 1 --num_workers 0 --val_batch_size 1 --task segmentation --max_epochs 1
 
 ###---- TADP Object Detection (cros domain) ----###
 
