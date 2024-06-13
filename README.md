@@ -81,11 +81,12 @@ This code is based on [VPD](https://github.com/wl-zhao/VPD), [diffusers](https:/
 
 # Citation
 ```
-@article{kondapaneni2023tadp,
-  title={Text-image Alignment for Diffusion-based Perception},
+@article{kondapaneni2024tadp,
+  title={Text-Image Alignment for Diffusion-Based Perception},
   author={Kondapaneni, Neehar and Marks, Markus and Knott, Manuel and Guimaraes, Rogerio and Perona, Pietro},
-  journal={arXiv preprint arXiv:2310.00031},
-  year={2023}
+  journal={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  year={2024},
+  month={June},
+  pages={13883-13893}
 }
 ```
-
